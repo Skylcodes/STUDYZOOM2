@@ -1,0 +1,13 @@
+<svg width="100%" height="100%" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid">
+  <defs>
+    <linearGradient id="nextjs-gradient" x1="55.633%" y1="56.385%" x2="83.228%" y2="96.08%">
+      <stop stop-color="#FFF" offset="0%"/>
+      <stop stop-color="#FFF" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+  </defs>
+  <g>
+    <circle cx="128" cy="128" r="128" fill="#000"/>
+    <path d="M212.634 224.028 98.335 76.875H76.8v102.25h17.228v-79.75l98.487 126.875a128.13 128.13 0 0 0 20.12-22.222Z" fill="url(#nextjs-gradient)"/>
+    <path d="M157.735 76.875h-16.971v102.25h16.971v-102.25Z" fill="#FFF"/>
+  </g>
+</svg> 
