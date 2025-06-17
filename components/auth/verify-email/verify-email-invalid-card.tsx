@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 import { resendEmailConfirmation } from '@/actions/auth/resend-email-confirmation';
 import { Button } from '@/components/ui/button';
@@ -71,12 +72,13 @@ export function VerifyEmailInvalidCard({
               Please return to the sign-up page to create an account or request a new verification email.
             </p>
             <Button
-              type="button"
+              asChild
               variant="default"
               className="w-full"
-              href="/auth/sign-up"
             >
-              Go to Sign Up
+              <Link href="/auth/sign-up">
+                Go to Sign Up
+              </Link>
             </Button>
           </>
         )}
