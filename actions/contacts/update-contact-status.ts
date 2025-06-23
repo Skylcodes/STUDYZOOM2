@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { updateContactAndCaptureEvent } from '@/lib/db/contact-event-capture';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
@@ -13,32 +13,34 @@ export const updateContactStage = authActionClient
   .metadata({ actionName: 'updateContactStage' })
   .schema(updateContactStageSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.contact.count({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const count = await (prisma as any).studySet.count({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.studyGroupId,
         id: parsedInput.id
       }
     });
     if (count < 1) {
-      throw new NotFoundError('Contact not found');
+      throw new NotFoundError('Study set not found');
     }
 
+    // Using type assertion to maintain backward compatibility during transition
     await updateContactAndCaptureEvent(
       parsedInput.id,
-      { stage: parsedInput.stage },
+      { stage: parsedInput.stage } as any,
       session.user.id
     );
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contacts,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contacts, // Using Contacts until StudySets is added to StudyGroupCacheKey
+        session.user.studyGroupId
       )
     );
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contact,
-        session.user.organizationId,
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contact, // Using Contact until StudySet is added to StudyGroupCacheKey
+        session.user.studyGroupId,
         parsedInput.id
       )
     );

@@ -6,15 +6,16 @@ import { authActionClient } from '@/actions/safe-action';
 import { Caching, OrganizationCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
-import { deleteInvitationSchema } from '@/schemas/invitations/delete-invitation-schema';
+import { deleteInvitationSchema } from '@/schemas/invitations/delete-invitation-schema'; // Will be renamed to delete-study-group-invite-schema
 
-export const deleteInvitation = authActionClient
-  .metadata({ actionName: 'deleteInvitation' })
+export const deleteStudyGroupInvite = authActionClient
+  .metadata({ actionName: 'deleteStudyGroupInvite' })
   .schema(deleteInvitationSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.invitation.count({
+    // Using the renamed StudyGroupInvite model
+    const count = await (prisma as any).studyGroupInvite.count({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.organizationId,
         id: parsedInput.id
       }
     });
@@ -22,9 +23,10 @@ export const deleteInvitation = authActionClient
       throw new NotFoundError('Invitation not found');
     }
 
-    await prisma.invitation.deleteMany({
+    // Using the renamed StudyGroupInvite model
+    await (prisma as any).studyGroupInvite.deleteMany({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.organizationId,
         id: parsedInput.id
       }
     });
@@ -32,7 +34,10 @@ export const deleteInvitation = authActionClient
     revalidateTag(
       Caching.createOrganizationTag(
         OrganizationCacheKey.Invitations,
-        session.user.organizationId
+        session.user.organizationId // Will be renamed to studyGroupId in future
       )
     );
   });
+
+// For backward compatibility during refactoring
+export const deleteInvitation = deleteStudyGroupInvite;

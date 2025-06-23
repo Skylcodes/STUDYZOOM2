@@ -1,53 +1,71 @@
 'use client';
 
-import * as React from 'react';
-import { StarIcon } from 'lucide-react';
+import { Star } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { addFavorite } from '@/actions/favorites/add-favorite';
 import { removeFavorite } from '@/actions/favorites/remove-favorite';
-import { Button, type ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { ContactDto } from '@/types/dtos/contact-dto';
 
-export type ContactFavoriteToggleProps = ButtonProps & {
-  contact: ContactDto;
-  addedToFavorites: boolean;
-};
+interface ContactFavoriteToggleProps {
+  contactId: string;
+  initialIsFavorite: boolean;
+}
 
 export function ContactFavoriteToggle({
-  contact,
-  addedToFavorites,
-  className,
-  ...other
-}: ContactFavoriteToggleProps): React.JSX.Element {
-  const description = addedToFavorites ? 'Remove favorite' : 'Add favorite';
-  const handleToggleFavorite = async (): Promise<void> => {
-    if (addedToFavorites) {
-      const result = await removeFavorite({ contactId: contact.id });
-      if (result?.serverError || result?.validationErrors) {
-        toast.error("Couldn't remove favorite");
+  contactId,
+  initialIsFavorite
+}: ContactFavoriteToggleProps) {
+  const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleToggleFavorite = async () => {
+    setIsPending(true);
+    try {
+      if (isFavorite) {
+        // Remove from favorites
+        const result = await removeFavorite({ id: contactId });
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success('Removed from favorites');
+        setIsFavorite(false);
+      } else {
+        // Add to favorites
+        const result = await addFavorite({ id: contactId });
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success('Added to favorites');
+        setIsFavorite(true);
       }
-    } else {
-      const result = await addFavorite({ contactId: contact.id });
-      if (result?.serverError || result?.validationErrors) {
-        toast.error("Couldn't add favorite");
-      }
+    } catch (error) {
+      toast.error('Failed to update favorites');
+      console.error(error);
+    } finally {
+      setIsPending(false);
     }
   };
+
   return (
     <Button
-      type="button"
       variant="ghost"
-      title={description}
+      size="icon"
       onClick={handleToggleFavorite}
-      className={cn('size-9', className)}
-      {...other}
+      disabled={isPending}
+      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      className="h-8 w-8"
     >
-      <StarIcon
-        className={cn('size-4 shrink-0', addedToFavorites && 'fill-primary')}
+      <Star
+        className={cn(
+          'h-4 w-4',
+          isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
+        )}
       />
-      <span className="sr-only">{description}</span>
     </Button>
   );
 }

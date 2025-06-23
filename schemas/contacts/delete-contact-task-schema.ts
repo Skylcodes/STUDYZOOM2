@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-export const deleteContactTaskSchema = z.object({
+// Schema for deleting action items (formerly contact tasks) from study sets
+export const deleteActionItemSchema = z.object({
   id: z
     .string({
       required_error: 'Id is required.',
@@ -12,4 +13,8 @@ export const deleteContactTaskSchema = z.object({
     .max(36, 'Maximum 36 characters allowed.')
 });
 
-export type DeleteContactTaskSchema = z.infer<typeof deleteContactTaskSchema>;
+export type DeleteActionItemSchema = z.infer<typeof deleteActionItemSchema>;
+
+// For backward compatibility during refactoring
+export const deleteContactTaskSchema = deleteActionItemSchema;
+export type DeleteContactTaskSchema = DeleteActionItemSchema;

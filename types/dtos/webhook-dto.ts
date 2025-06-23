@@ -1,4 +1,4 @@
-import { type WebhookTrigger } from '@prisma/client';
+import { type WebhookTrigger } from '../prisma-mappings';
 
 export type WebhookDto = {
   id: string;

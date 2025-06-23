@@ -3,6 +3,7 @@ import { addSeconds } from 'date-fns';
 import { type NextAuthConfig, type Session } from 'next-auth';
 import { validate as uuidValidate } from 'uuid';
 
+import { dedupedAuth } from '@/lib/auth';
 import { isDefined, type IsDefinedGuard } from '@/lib/validation/is-defined';
 import { isString } from '@/lib/validation/is-string';
 import type { Maybe } from '@/types/maybe';
@@ -15,7 +16,6 @@ export function checkSession(
       id: string;
       email: string;
       name: string;
-      organizationId: string;
     };
   }
 > {
@@ -65,19 +65,7 @@ export function checkSession(
     return false;
   }
 
-  // session.user.organizationId
-  if (!isDefined(session.user.organizationId)) {
-    console.warn(
-      `User ${session.user.id} has an undefined organizationId. This may indicate an issue with user organization assignment. Please check the methods createOrganizationAndConnectUser and joinOrganization.`
-    );
-    return false;
-  }
-  if (!uuidValidate(session.user.organizationId)) {
-    console.warn(
-      `User ${session.user.id} has an invalid organizationId. Expected a UUID.`
-    );
-    return false;
-  }
+  // No longer checking for organizationId as it's been removed from the data model
 
   return true;
 }
@@ -96,3 +84,17 @@ export const session = {
   updateAge: 24 * 60 * 60, // 24 hours
   generateSessionToken
 } satisfies NextAuthConfig['session'];
+
+/**
+ * Get the current authenticated user from the session
+ * Returns null if no user is authenticated
+ */
+export async function getCurrentUser() {
+  const session = await dedupedAuth();
+  
+  if (!checkSession(session)) {
+    return null;
+  }
+  
+  return session.user;
+}

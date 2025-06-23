@@ -1,4 +1,4 @@
-import { type ActionType, type Prisma } from '@prisma/client';
+import { type ActionType, type Prisma } from '../prisma-mappings';
 
 export type ActivityTimelineEventDto = {
   id: string;

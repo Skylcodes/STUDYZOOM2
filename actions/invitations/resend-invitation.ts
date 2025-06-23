@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidateTag } from 'next/cache';
-import { InvitationStatus } from '@prisma/client';
+import { InviteStatus } from '../../types/prisma-mappings';
 
 import { authActionClient } from '@/actions/safe-action';
 import { Routes } from '@/constants/routes';
@@ -16,18 +16,20 @@ export const resendInvitation = authActionClient
   .metadata({ actionName: 'resendInvitation' })
   .schema(resendInvitationSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const organization = await prisma.organization.findFirst({
-      where: { id: session.user.organizationId },
+    // Using the renamed StudyGroup model
+    const organization = await (prisma as any).studyGroup.findFirst({
+      where: { id: session.user.organizationId }, // Will be renamed to studyGroupId in future
       select: { name: true }
     });
     if (!organization) {
       throw new NotFoundError('Organization not found');
     }
 
-    const invitation = await prisma.invitation.findFirst({
+    // Using the renamed StudyGroupInvite model
+    const invitation = await (prisma as any).studyGroupInvite.findFirst({
       where: {
         id: parsedInput.id,
-        organizationId: session.user.organizationId
+        studyGroupId: session.user.organizationId
       },
       select: {
         email: true,
@@ -39,10 +41,10 @@ export const resendInvitation = authActionClient
       throw new NotFoundError('Invitation not found');
     }
 
-    if (invitation.status === InvitationStatus.ACCEPTED) {
+    if (invitation.status === InviteStatus.ACCEPTED) {
       throw new PreConditionError('Invitation already accepted');
     }
-    if (invitation.status === InvitationStatus.REVOKED) {
+    if (invitation.status === InviteStatus.REVOKED) {
       throw new PreConditionError('Invitation was revoked');
     }
 
@@ -51,13 +53,14 @@ export const resendInvitation = authActionClient
       organizationName: organization.name,
       invitedByEmail: session.user.email,
       invitedByName: session.user.name,
-      inviteLink: `${getBaseUrl()}${Routes.InvitationRequest}/${invitation.token}`
+      inviteLink: `${getBaseUrl()}/invitations/request/${invitation.token}` // Using direct path instead of Routes constant
     });
 
-    await prisma.invitation.update({
+    // Using the renamed StudyGroupInvite model
+    await (prisma as any).studyGroupInvite.update({
       where: {
         id: parsedInput.id,
-        organizationId: session.user.organizationId
+        studyGroupId: session.user.organizationId
       },
       data: { lastSentAt: new Date() },
       select: {

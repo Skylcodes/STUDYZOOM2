@@ -47,7 +47,7 @@ export function Logo({
           </div>
         </div>
       )}
-      {!hideWordmark && <span className="font-bold">{AppInfo.APP_NAME}</span>}
+      {!hideWordmark && <span className="font-bold bg-gradient-to-r from-[#4B7BF5] to-[#9181F2] bg-clip-text text-transparent">{AppInfo.APP_NAME}</span>}
     </div>
   );
 }

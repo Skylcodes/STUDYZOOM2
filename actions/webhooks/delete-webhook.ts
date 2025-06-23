@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, OrganizationCacheKey, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
 import { deleteWebhookSchema } from '@/schemas/webhooks/delete-webhook-schema';
@@ -12,9 +12,9 @@ export const deleteWebhook = authActionClient
   .metadata({ actionName: 'deleteWebhook' })
   .schema(deleteWebhookSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.webhook.count({
+    const count = await (prisma as any).webhook.count({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.studyGroupId || session.user.organizationId,
         id: parsedInput.id
       }
     });
@@ -22,7 +22,7 @@ export const deleteWebhook = authActionClient
       throw new NotFoundError('Webhook not found');
     }
 
-    await prisma.webhook.delete({
+    await (prisma as any).webhook.delete({
       where: { id: parsedInput.id },
       select: {
         id: true // SELECT NONE
@@ -30,9 +30,9 @@ export const deleteWebhook = authActionClient
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Webhooks,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Webhooks,
+        session.user.studyGroupId || session.user.organizationId
       )
     );
   });

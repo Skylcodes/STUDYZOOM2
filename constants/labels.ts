@@ -1,41 +1,32 @@
 import {
-  ContactRecord,
-  ContactStage,
   FeedbackCategory,
-  Role,
-  WebhookTrigger
+  Role
 } from '@prisma/client';
+import { StudySetStage } from '@/types/prisma-mappings';
 
-export const contactStageColor: Record<ContactStage, string> = {
-  [ContactStage.LEAD]: 'bg-gray-600 ring-1 ring-gray-100 dark:ring-gray-900',
-  [ContactStage.QUALIFIED]:
-    'bg-yellow-600 ring-1 ring-yellow-100 dark:ring-yellow-900',
-  [ContactStage.OPPORTUNITY]:
-    'bg-orange-600  ring-1 ring-orange-100 dark:ring-orange-900',
-  [ContactStage.PROPOSAL]:
-    'bg-blue-600 ring-1 ring-blue-100 dark:ring-blue-900',
-  [ContactStage.IN_NEGOTIATION]:
-    'bg-teal-600 ring-1 ring-teal-100 dark:ring-teal-900',
-  [ContactStage.LOST]: 'bg-red-600 ring-1 ring-red-100 dark:ring-red-900',
-  [ContactStage.WON]: 'bg-green-600 ring-1 ring-green-100 dark:ring-green-900'
+// Domain-aligned study set stage colors
+export const studySetStageColor: Record<StudySetStage, string> = {
+  [StudySetStage.NEW]: 'border-blue-500',
+  [StudySetStage.IN_PROGRESS]: 'border-yellow-500',
+  [StudySetStage.COMPLETED]: 'border-green-500',
+  [StudySetStage.ARCHIVED]: 'border-gray-500'
 };
 
-export const contactStageLabel: Record<ContactStage, string> = {
-  [ContactStage.LEAD]: 'Lead',
-  [ContactStage.QUALIFIED]: 'Qualified',
-  [ContactStage.OPPORTUNITY]: 'Opportunity',
-  [ContactStage.PROPOSAL]: 'Proposal',
-  [ContactStage.IN_NEGOTIATION]: 'In negotiation',
-  [ContactStage.LOST]: 'Lost',
-  [ContactStage.WON]: 'Won'
+// Domain-aligned study set stage labels
+export const studySetStageLabel: Record<StudySetStage, string> = {
+  [StudySetStage.NEW]: 'New',
+  [StudySetStage.IN_PROGRESS]: 'In Progress',
+  [StudySetStage.COMPLETED]: 'Completed',
+  [StudySetStage.ARCHIVED]: 'Archived'
 };
 
-export const contactRecordLabel: Record<ContactRecord, string> = {
-  [ContactRecord.PERSON]: 'Person',
-  [ContactRecord.COMPANY]: 'Company'
-};
+// For backward compatibility
+export const contactStageColor = studySetStageColor;
+export const contactStageLabel = studySetStageLabel;
 
 export const roleLabels: Record<Role, string> = {
+  [Role.STUDENT]: 'Student',
+  [Role.INSTRUCTOR]: 'Instructor',
   [Role.MEMBER]: 'Member',
   [Role.ADMIN]: 'Admin'
 };
@@ -46,8 +37,4 @@ export const feedbackCategoryLabels: Record<FeedbackCategory, string> = {
   [FeedbackCategory.QUESTION]: 'Question'
 };
 
-export const webhookTriggerLabels: Record<WebhookTrigger, string> = {
-  [WebhookTrigger.CONTACT_CREATED]: 'Contact created',
-  [WebhookTrigger.CONTACT_UPDATED]: 'Contact updated',
-  [WebhookTrigger.CONTACT_DELETED]: 'Contact deleted'
-};
+// Webhook trigger labels removed as part of pivot to document-centric model

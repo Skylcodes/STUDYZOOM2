@@ -1,19 +1,17 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowLeftRightIcon } from 'lucide-react';
-import AppleCalendar from 'public/marketing/features/apple-calendar.svg';
-import GoogleCalendar from 'public/marketing/features/google-calendar.svg';
-import OutlookCalendar from 'public/marketing/features/outlook-calendar.svg';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 const DATA_MAGIC_INBOX = [
-  { icon: AppleCalendar },
-  { icon: GoogleCalendar },
-  { icon: OutlookCalendar }
+  { icon: '/marketing/features/apple-calendar.svg', alt: 'Apple Calendar' },
+  { icon: '/marketing/features/google-calendar.svg', alt: 'Google Calendar' },
+  { icon: '/marketing/features/outlook-calendar.svg', alt: 'Outlook Calendar' }
 ];
 
 const MotionCard = motion.create(Card);
@@ -59,7 +57,7 @@ export function BentoMagicInboxCard({
             </div>
             {/* Icons */}
             <div className="flex flex-row gap-4">
-              {DATA_MAGIC_INBOX.map(({ icon: Icon }, index) => (
+              {DATA_MAGIC_INBOX.map(({ icon, alt }, index) => (
                 <div
                   key={index}
                   className={cn(
@@ -67,8 +65,10 @@ export function BentoMagicInboxCard({
                     active === index ? 'opacity-100' : 'opacity-25'
                   )}
                 >
-                  <div className="size-10 rounded-full border-2 border-background ring-1 ring-border/80">
-                    <Icon
+                  <div className="size-10 rounded-full border-2 border-background ring-1 ring-border/80 relative overflow-hidden">
+                    <Image
+                      src={icon}
+                      alt={alt}
                       width={36}
                       height={36}
                       className="rounded-full"

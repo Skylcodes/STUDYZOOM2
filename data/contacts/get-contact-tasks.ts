@@ -14,21 +14,21 @@ import { checkSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { ValidationError } from '@/lib/validation/exceptions';
 import {
-  getContactTasksSchema,
-  type GetContactTasksSchema
-} from '@/schemas/contacts/get-contact-tasks-schema';
-import type { ContactTaskDto } from '@/types/dtos/contact-task-dto';
+  getActionItemsSchema,
+  type GetActionItemsSchema
+} from '@/schemas/contacts/get-contact-tasks-schema'; // Will be renamed to get-action-items-schema
+import type { ActionItemDto } from '@/types/dtos/contact-task-dto'; // Will be renamed to action-item-dto
 import { SortDirection } from '@/types/sort-direction';
 
-export async function getContactTasks(
-  input: GetContactTasksSchema
-): Promise<ContactTaskDto[]> {
+export async function getActionItems(
+  input: GetActionItemsSchema
+): Promise<ActionItemDto[]> {
   const session = await dedupedAuth();
   if (!checkSession(session)) {
     return redirect(getLoginRedirect());
   }
 
-  const result = getContactTasksSchema.safeParse(input);
+  const result = getActionItemsSchema.safeParse(input);
   if (!result.success) {
     throw new ValidationError(JSON.stringify(result.error.flatten()));
   }
@@ -36,11 +36,12 @@ export async function getContactTasks(
 
   return cache(
     async () => {
-      const tasks = await prisma.contactTask.findMany({
+      // Using the renamed ActionItem model
+      const tasks = await (prisma as any).actionItem.findMany({
         where: {
-          contactId: parsedInput.contactId,
-          contact: {
-            organizationId: session.user.organizationId
+          studySetId: parsedInput.contactId, // Will be renamed to studySetId in future
+          studySet: {
+            studyGroupId: session.user.organizationId
           }
         },
         select: {
@@ -57,9 +58,9 @@ export async function getContactTasks(
         }
       });
 
-      const mapped: ContactTaskDto[] = tasks.map((task) => ({
+      const mapped: ActionItemDto[] = tasks.map((task) => ({
         id: task.id,
-        contactId: task.contactId ?? undefined,
+        contactId: task.studySetId ?? undefined, // Will be renamed to studySetId in future
         title: task.title,
         description: task.description ?? undefined,
         status: task.status,
@@ -78,7 +79,7 @@ export async function getContactTasks(
       revalidate: defaultRevalidateTimeInSeconds,
       tags: [
         Caching.createOrganizationTag(
-          OrganizationCacheKey.ContactTasks,
+          OrganizationCacheKey.ContactTasks, // Will be renamed to ActionItems in future
           session.user.organizationId,
           parsedInput.contactId
         )
@@ -86,3 +87,6 @@ export async function getContactTasks(
     }
   )();
 }
+
+// Backward compatibility export
+export const getContactTasks = getActionItems;

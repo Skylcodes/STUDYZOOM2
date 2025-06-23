@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidateTag } from 'next/cache';
-import { InvitationStatus } from '@prisma/client';
+import { InviteStatus } from '../../types/prisma-mappings';
 
 import { authActionClient } from '@/actions/safe-action';
 import { Caching, OrganizationCacheKey } from '@/data/caching';
@@ -14,15 +14,16 @@ export const revokeInvitation = authActionClient
   .metadata({ actionName: 'revokeInvitation' })
   .schema(revokeInvitationSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const invitation = await prisma.invitation.findFirst({
+    // Using the renamed StudyGroupInvite model
+    const invitation = await (prisma as any).studyGroupInvite.findFirst({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.organizationId,
         id: parsedInput.id
       },
       select: {
         status: true,
         email: true,
-        organization: {
+        studyGroup: {
           select: {
             name: true
           }
@@ -33,28 +34,29 @@ export const revokeInvitation = authActionClient
       throw new NotFoundError('Invitation not found');
     }
 
-    await prisma.invitation.updateMany({
+    // Using the renamed StudyGroupInvite model
+    await (prisma as any).studyGroupInvite.updateMany({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.organizationId,
         id: parsedInput.id,
         AND: [
-          { NOT: { status: { equals: InvitationStatus.ACCEPTED } } },
-          { NOT: { status: { equals: InvitationStatus.REVOKED } } }
+          { NOT: { status: { equals: InviteStatus.ACCEPTED } } },
+          { NOT: { status: { equals: InviteStatus.REVOKED } } }
         ]
       },
       data: {
-        status: InvitationStatus.REVOKED
+        status: InviteStatus.REVOKED
       }
     });
 
     if (
-      invitation.status !== InvitationStatus.REVOKED &&
-      invitation.status !== InvitationStatus.ACCEPTED
+      invitation.status !== InviteStatus.REVOKED &&
+      invitation.status !== InviteStatus.ACCEPTED
     ) {
       try {
         await sendRevokedInvitationEmail({
           recipient: invitation.email,
-          organizationName: invitation.organization.name
+          organizationName: invitation.studyGroup.name
         });
       } catch (e) {
         console.error(e);
@@ -64,7 +66,7 @@ export const revokeInvitation = authActionClient
     revalidateTag(
       Caching.createOrganizationTag(
         OrganizationCacheKey.Invitations,
-        session.user.organizationId
+        session.user.organizationId // Will be renamed to studyGroupId in future
       )
     );
   });

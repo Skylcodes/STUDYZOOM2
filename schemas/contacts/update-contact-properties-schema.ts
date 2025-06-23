@@ -1,6 +1,7 @@
-import { ContactRecord } from '@prisma/client';
+import { StudySetStage } from '../../types/prisma-mappings';
 import { z } from 'zod';
 
+// Schema for updating study set properties (formerly contact properties)
 export const updateContactPropertiesSchema = z.object({
   id: z
     .string({
@@ -11,7 +12,7 @@ export const updateContactPropertiesSchema = z.object({
     .uuid('Id is invalid.')
     .min(1, 'Id is required.')
     .max(36, 'Maximum 36 characters allowed.'),
-  record: z.nativeEnum(ContactRecord, {
+  record: z.nativeEnum(StudySetStage, {
     required_error: 'Record is required',
     invalid_type_error: 'Record must be a string'
   }),
@@ -53,3 +54,7 @@ export const updateContactPropertiesSchema = z.object({
 export type UpdateContactPropertiesSchema = z.infer<
   typeof updateContactPropertiesSchema
 >;
+
+// For backward compatibility during refactoring
+export const updateStudySetPropertiesSchema = updateContactPropertiesSchema;
+export type UpdateStudySetPropertiesSchema = UpdateContactPropertiesSchema;

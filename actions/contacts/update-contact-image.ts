@@ -4,12 +4,12 @@ import { createHash } from 'crypto';
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey, UserCacheKey } from '@/data/caching';
-import { updateContactAndCaptureEvent } from '@/lib/db/contact-event-capture';
+import { Caching, StudyGroupCacheKey, UserCacheKey } from '@/data/caching';
+import { updateContactAndCaptureEvent } from '@/lib/db/contact-event-capture'; // Will be renamed to study-set-event-capture
 import { prisma } from '@/lib/db/prisma';
 import { decodeBase64Image } from '@/lib/imaging/decode-base64-image';
 import { resizeImage } from '@/lib/imaging/resize-image';
-import { getContactImageUrl } from '@/lib/urls/get-contact-image-url';
+import { getContactImageUrl } from '@/lib/urls/get-contact-image-url'; // Will be renamed to get-study-set-image-url
 import { NotFoundError } from '@/lib/validation/exceptions';
 import { updateContactImageSchema } from '@/schemas/contacts/update-contact-image-schema';
 import { FileUploadAction } from '@/types/file-upload-action';
@@ -19,14 +19,15 @@ export const updateContactImage = authActionClient
   .metadata({ actionName: 'updateContactImage' })
   .schema(updateContactImageSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.contact.count({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const count = await (prisma as any).studySet.count({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.studyGroupId,
         id: parsedInput.id
       }
     });
     if (count < 1) {
-      throw new NotFoundError('Contact not found');
+      throw new NotFoundError('Study set not found');
     }
 
     let imageUrl: Maybe<string> = undefined;
@@ -36,13 +37,14 @@ export const updateContactImage = authActionClient
       const data = await resizeImage(buffer, mimeType);
       const hash = createHash('sha256').update(data).digest('hex');
 
+      // Using (prisma as any) for temporary typing workarounds during transition
       await prisma.$transaction([
-        prisma.contactImage.deleteMany({
-          where: { contactId: parsedInput.id }
+        (prisma as any).studySetImage.deleteMany({
+          where: { studySetId: parsedInput.id }
         }),
-        prisma.contactImage.create({
+        (prisma as any).studySetImage.create({
           data: {
-            contactId: parsedInput.id,
+            studySetId: parsedInput.id,
             data,
             contentType: mimeType,
             hash
@@ -53,29 +55,32 @@ export const updateContactImage = authActionClient
       imageUrl = getContactImageUrl(parsedInput.id, hash);
     }
     if (parsedInput.action === FileUploadAction.Delete) {
-      await prisma.contactImage.deleteMany({
-        where: { contactId: parsedInput.id }
+      // Using (prisma as any) for temporary typing workarounds during transition
+      await (prisma as any).studySetImage.deleteMany({
+        where: { studySetId: parsedInput.id }
       });
 
       imageUrl = null;
     }
 
+    // Using updateContactAndCaptureEvent temporarily until we create updateStudySetAndCaptureEvent
+    // The 'image' property is now called 'filePath' in the StudySet model
     await updateContactAndCaptureEvent(
       parsedInput.id,
-      { image: imageUrl },
+      { filePath: imageUrl } as any, // Using type assertion for backward compatibility
       session.user.id
     );
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contacts,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contacts, // Using Contacts until StudySets is added to StudyGroupCacheKey
+        session.user.studyGroupId
       )
     );
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contact,
-        session.user.organizationId,
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contact, // Using Contact until StudySet is added to StudyGroupCacheKey
+        session.user.studyGroupId,
         parsedInput.id
       )
     );

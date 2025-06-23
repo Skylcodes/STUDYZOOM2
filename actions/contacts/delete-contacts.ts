@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey, UserCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey, UserCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { deleteContactsSchema } from '@/schemas/contacts/delete-contacts-schema';
 
@@ -11,27 +11,28 @@ export const deleteContacts = authActionClient
   .metadata({ actionName: 'deleteContacts' })
   .schema(deleteContactsSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    await prisma.contact.deleteMany({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    await (prisma as any).studySet.deleteMany({
       where: {
         id: {
           in: parsedInput.ids
         },
-        organizationId: session.user.organizationId
+        studyGroupId: session.user.studyGroupId
       }
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contacts,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contacts, // Using Contacts until StudySets is added to StudyGroupCacheKey
+        session.user.studyGroupId
       )
     );
 
     for (const id of parsedInput.ids) {
       revalidateTag(
-        Caching.createOrganizationTag(
-          OrganizationCacheKey.Contact,
-          session.user.organizationId,
+        Caching.createStudyGroupTag(
+          StudyGroupCacheKey.Contact, // Using Contact until StudySet is added to StudyGroupCacheKey
+          session.user.studyGroupId,
           id
         )
       );

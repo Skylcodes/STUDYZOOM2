@@ -6,7 +6,8 @@ import { redirect } from 'next/navigation';
 import {
   Caching,
   defaultRevalidateTimeInSeconds,
-  OrganizationCacheKey
+  OrganizationCacheKey,
+  StudyGroupCacheKey
 } from '@/data/caching';
 import { dedupedAuth } from '@/lib/auth';
 import { getLoginRedirect } from '@/lib/auth/redirect';
@@ -23,8 +24,8 @@ export async function getOrganizationDetails(): Promise<OrganizationDetailsDto> 
 
   return cache(
     async () => {
-      const organization = await prisma.organization.findFirst({
-        where: { id: session.user.organizationId },
+      const organization = await (prisma as any).studyGroup.findFirst({
+        where: { id: session.user.studyGroupId || session.user.organizationId },
         select: {
           name: true,
           address: true,
@@ -47,16 +48,16 @@ export async function getOrganizationDetails(): Promise<OrganizationDetailsDto> 
 
       return response;
     },
-    Caching.createOrganizationKeyParts(
-      OrganizationCacheKey.OrganizationDetails,
-      session.user.organizationId
+    Caching.createStudyGroupKeyParts(
+      StudyGroupCacheKey.OrganizationDetails,
+      session.user.studyGroupId || session.user.organizationId
     ),
     {
       revalidate: defaultRevalidateTimeInSeconds,
       tags: [
-        Caching.createOrganizationTag(
-          OrganizationCacheKey.OrganizationDetails,
-          session.user.organizationId
+        Caching.createStudyGroupTag(
+          StudyGroupCacheKey.OrganizationDetails,
+          session.user.studyGroupId || session.user.organizationId
         )
       ]
     }

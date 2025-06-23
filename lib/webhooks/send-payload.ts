@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto';
-import { Webhook, WebhookTrigger } from '@prisma/client';
+import { Webhook, WebhookTrigger } from '@/types/prisma-mappings';
 
 import { MediaTypeNames } from '@/constants/media-type-names';
 import { HttpMethod } from '@/types/http-method';

@@ -1,9 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import { GlobeLockIcon } from 'lucide-react';
-import GoogleLogo from 'public/google-logo.svg';
-import MicrosoftLogo from 'public/microsoft-logo.svg';
 import { toast } from 'sonner';
 
 import { connectAccount } from '@/actions/account/connect-account';
@@ -121,17 +120,25 @@ function Icon({
   switch (connectedAccount.id) {
     case OAuthIdentityProvider.Google:
       return (
-        <GoogleLogo
-          width="20"
-          height="20"
-        />
+        <div className="relative w-5 h-5">
+          <Image 
+            src="/google-logo.svg" 
+            alt="Google logo"
+            width={20}
+            height={20}
+          />
+        </div>
       );
     case OAuthIdentityProvider.MicrosoftEntraId:
       return (
-        <MicrosoftLogo
-          width="20"
-          height="20"
-        />
+        <div className="relative w-5 h-5">
+          <Image 
+            src="/microsoft-logo.svg" 
+            alt="Microsoft logo"
+            width={20}
+            height={20}
+          />
+        </div>
       );
   }
 

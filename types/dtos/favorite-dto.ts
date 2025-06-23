@@ -1,4 +1,4 @@
-import { type ContactRecord } from '@prisma/client';
+import { type ContactRecord } from '../prisma-mappings';
 
 export type FavoriteDto = {
   id: string;

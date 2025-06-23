@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronLeftIcon } from 'lucide-react';
 
 import { NavAccount } from '@/components/dashboard/settings/nav-account';
-import { NavOrganization } from '@/components/dashboard/settings/nav-organization';
+import { NavDocuments } from '@/components/dashboard/settings/nav-documents';
 import { buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -49,7 +49,7 @@ export function SettingsSidebar(): React.JSX.Element {
           className="h-full"
         >
           <NavAccount className="pt-0" />
-          <NavOrganization />
+          <NavDocuments />
         </ScrollArea>
       </SidebarContent>
     </Sidebar>

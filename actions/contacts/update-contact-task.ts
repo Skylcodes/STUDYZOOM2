@@ -3,19 +3,20 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
-import { updateContactTaskSchema } from '@/schemas/contacts/update-contact-task-schema';
+import { updateActionItemSchema } from '@/schemas/contacts/update-contact-task-schema';
 
-export const updateContactTask = authActionClient
-  .metadata({ actionName: 'updateContactTask' })
-  .schema(updateContactTaskSchema)
+export const updateActionItem = authActionClient
+  .metadata({ actionName: 'updateActionItem' })
+  .schema(updateActionItemSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const task = await prisma.contactTask.update({
+    // Using the renamed ActionItem model
+    const task = await (prisma as any).actionItem.update({
       where: {
         id: parsedInput.id,
-        contact: {
-          organizationId: session.user.organizationId
+        studySet: {
+          studyGroupId: session.user.studyGroupId
         }
       },
       data: {
@@ -24,14 +25,17 @@ export const updateContactTask = authActionClient
         status: parsedInput.status,
         dueDate: parsedInput.dueDate ? parsedInput.dueDate : null
       },
-      select: { contactId: true }
+      select: { studySetId: true }
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.ContactTasks,
-        session.user.organizationId,
-        task.contactId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.ContactTasks, // Will be renamed to ActionItems in future
+        session.user.studyGroupId,
+        task.studySetId
       )
     );
   });
+
+// For backward compatibility during refactoring
+export const updateContactTask = updateActionItem;

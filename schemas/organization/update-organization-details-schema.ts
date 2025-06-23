@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-export const updateOrganizationDetailsSchema = z.object({
+// Schema for updating study group details (formerly organization details)
+export const updateStudyGroupDetailsSchema = z.object({
   name: z
     .string({
       required_error: 'Organization name is required.',
@@ -45,6 +46,10 @@ export const updateOrganizationDetailsSchema = z.object({
     .or(z.literal(''))
 });
 
-export type UpdateOrganizationDetailsSchema = z.infer<
-  typeof updateOrganizationDetailsSchema
+export type UpdateStudyGroupDetailsSchema = z.infer<
+  typeof updateStudyGroupDetailsSchema
 >;
+
+// For backward compatibility during refactoring
+export const updateOrganizationDetailsSchema = updateStudyGroupDetailsSchema;
+export type UpdateOrganizationDetailsSchema = UpdateStudyGroupDetailsSchema;

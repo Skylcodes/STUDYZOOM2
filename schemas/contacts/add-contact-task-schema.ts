@@ -1,14 +1,16 @@
-import { ContactTaskStatus } from '@prisma/client';
+import { ActionItemStatus } from '../../types/prisma-mappings';
 import { z } from 'zod';
 
-export const addContactTaskSchema = z.object({
+// Schema for adding action items (formerly contact tasks) to study sets
+export const addActionItemSchema = z.object({
   contactId: z
     .string({
-      invalid_type_error: 'Contact id must be a string.'
+      invalid_type_error: 'StudySet id must be a string.'
     })
     .trim()
-    .uuid('Contact id is invalid.')
+    .uuid('StudySet id is invalid.')
     .max(36, 'Maximum 36 characters allowed.'),
+  // TODO: Rename to studySetId in future refactoring
   title: z
     .string({
       required_error: 'Title is required.',
@@ -26,10 +28,14 @@ export const addContactTaskSchema = z.object({
     .optional()
     .or(z.literal('')),
   dueDate: z.coerce.date().optional(),
-  status: z.nativeEnum(ContactTaskStatus, {
+  status: z.nativeEnum(ActionItemStatus, {
     required_error: 'Status is required',
     invalid_type_error: 'Status must be a string'
   })
 });
 
-export type AddContactTaskSchema = z.infer<typeof addContactTaskSchema>;
+export type AddActionItemSchema = z.infer<typeof addActionItemSchema>;
+
+// For backward compatibility during refactoring
+export const addContactTaskSchema = addActionItemSchema;
+export type AddContactTaskSchema = AddActionItemSchema;

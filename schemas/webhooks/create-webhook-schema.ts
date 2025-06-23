@@ -1,4 +1,4 @@
-import { WebhookTrigger } from '@prisma/client';
+import { WebhookTrigger } from '../../types/prisma-mappings';
 import { literal, z } from 'zod';
 
 export const createWebhookSchema = z.object({

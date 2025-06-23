@@ -116,14 +116,11 @@ const ReviewCard = ({ review }: { review: Review }) => {
         >
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                    <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-blue-400/30 group-hover:ring-blue-400/50 transition-all duration-300">
-                        <Image
-                            src={review.avatar}
-                            alt={`${review.name}'s avatar`}
-                            width={48}
-                            height={48}
-                            className="object-cover"
-                        />
+                    <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-blue-400/30 group-hover:ring-blue-400/50 transition-all duration-300 flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+                        {/* Display initials instead of external images */}
+                        <span className="text-white font-medium text-sm">
+                            {review.name.split(' ').map(n => n[0]).join('')}
+                        </span>
                     </div>
                     <div>
                         <div className="flex items-center gap-2">

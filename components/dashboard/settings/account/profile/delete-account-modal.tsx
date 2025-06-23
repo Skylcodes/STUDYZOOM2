@@ -101,7 +101,7 @@ export const DeleteAccountModal = NiceModal.create<DeleteAccountModalProps>(
                 />
               </FormControl>
               <FormLabel className="leading-2 cursor-pointer">
-                I will not be able to access the organization and it's data
+                I will not be able to access my account and all my data
                 anymore.
               </FormLabel>
             </FormItem>

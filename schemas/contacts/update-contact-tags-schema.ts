@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// Schema for updating tags on study sets (formerly contacts)
 export const updateContactTagsSchema = z.object({
   id: z
     .string({
@@ -26,3 +27,7 @@ export const updateContactTagsSchema = z.object({
 });
 
 export type UpdateContactTagsSchema = z.infer<typeof updateContactTagsSchema>;
+
+// For backward compatibility during refactoring
+export const updateStudySetTagsSchema = updateContactTagsSchema;
+export type UpdateStudySetTagsSchema = UpdateContactTagsSchema;

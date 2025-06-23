@@ -14,11 +14,6 @@ import { checkSession } from '@/lib/auth/session';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
 
-type Organization = {
-  name: string;
-  completedOnboarding: boolean;
-};
-
 type User = {
   name: string;
   email?: string;
@@ -27,7 +22,6 @@ type User = {
 };
 
 type OnboardingData = {
-  organization: Organization;
   user: User;
 };
 
@@ -43,7 +37,6 @@ export async function getOnboardingData(): Promise<OnboardingData> {
         where: { id: session.user.id },
         select: {
           id: true,
-          organizationId: true,
           image: true,
           name: true,
           email: true,
@@ -54,22 +47,8 @@ export async function getOnboardingData(): Promise<OnboardingData> {
         throw new NotFoundError('User not found');
       }
 
-      const organization = await prisma.organization.findFirst({
-        where: { id: session.user.organizationId },
-        select: {
-          name: true,
-          completedOnboarding: true
-        }
-      });
-      if (!organization) {
-        throw new NotFoundError('Organization not found');
-      }
-
+      // Organization references removed as part of pivot to document-centric model
       return {
-        organization: {
-          name: organization.name,
-          completedOnboarding: organization.completedOnboarding
-        },
         user: {
           name: user.name,
           email: user.email ?? undefined,

@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role } from '../../types/prisma-mappings';
 import { z } from 'zod';
 
 export const sendInvitationSchema = z.object({

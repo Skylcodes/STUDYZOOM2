@@ -190,9 +190,22 @@ export const callbacks = {
     console.log(`[AUTH] Session callback triggered: ${trigger}`);
     
     if (session && user) {
-      console.log(`[AUTH] Setting session data for user ID: ${user.id}, organization ID: ${user.organizationId || 'none'}`);
-      session.user.organizationId = user.organizationId;
+      console.log(`[AUTH] Setting session data for user ID: ${user.id}`);
       session.user.id = user.id;
+      
+      // Set both studyGroupId and organizationId for backward compatibility
+      if (user.studyGroupId) {
+        console.log(`[AUTH] Setting studyGroupId: ${user.studyGroupId}`);
+        session.user.studyGroupId = user.studyGroupId;
+        // Keep organizationId for backward compatibility
+        session.user.organizationId = user.studyGroupId;
+      } else if (user.organizationId) {
+        // Legacy path - if only organizationId exists, set both
+        console.log(`[AUTH] Setting organizationId: ${user.organizationId}`);
+        session.user.organizationId = user.organizationId;
+        // Set studyGroupId to match organizationId
+        session.user.studyGroupId = user.organizationId;
+      }
     } else if (!session) {
       console.warn('[AUTH] Session callback called with no session data');
     } else if (!user) {

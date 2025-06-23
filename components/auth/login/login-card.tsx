@@ -2,14 +2,13 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   AlertCircleIcon,
   ArrowRightIcon,
   LockIcon,
   MailIcon
 } from 'lucide-react';
-import GoogleLogo from 'public/google-logo.svg';
-import MicrosoftLogo from 'public/microsoft-logo.svg';
 import { toast } from 'sonner';
 
 import { continueWithGoogle } from '@/actions/auth/continue-with-google';
@@ -41,6 +40,8 @@ import { Routes } from '@/constants/routes';
 import { useZodForm } from '@/hooks/use-zod-form';
 import { AuthErrorCode, authErrorMessages } from '@/lib/auth/errors';
 import { cn } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
 import {
   passThroughlogInSchema,
   type PassThroughLogInSchema
@@ -48,6 +49,15 @@ import {
 
 export function LoginCard(props: CardProps): React.JSX.Element {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const searchParams = useSearchParams();
+  const verifiedEmail = searchParams.get('email');
+  const isVerified = searchParams.get('verified') === 'true';
+
+  useEffect(() => {
+    if (isVerified && verifiedEmail) {
+      toast.success('Email verified successfully! Please sign in to continue.');
+    }
+  }, [isVerified, verifiedEmail]);
   const [errorMessage, setErrorMessage] = React.useState<string>();
   const [unverifiedEmail, setUnverifiedEmail] = React.useState<
     string | undefined
@@ -116,9 +126,11 @@ export function LoginCard(props: CardProps): React.JSX.Element {
   return (
     <Card {...props}>
       <CardHeader>
-        <CardTitle>Log in</CardTitle>
+        <CardTitle className="text-2xl">Welcome back</CardTitle>
         <CardDescription>
-          Enter your details below to sign into your account.
+          {isVerified && verifiedEmail 
+            ? `Email ${verifiedEmail} verified successfully! Please sign in.` 
+            : 'Enter your email and password to sign in to your account'}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -219,10 +231,14 @@ export function LoginCard(props: CardProps): React.JSX.Element {
             disabled={!canSubmit}
             onClick={handleSignInWithGoogle}
           >
-            <GoogleLogo
-              width="20"
-              height="20"
-            />
+            <div className="relative w-5 h-5">
+              <Image 
+                src="/google-logo.svg" 
+                alt="Google logo"
+                width={20}
+                height={20}
+              />
+            </div>
             Google
           </Button>
           <Button
@@ -232,10 +248,14 @@ export function LoginCard(props: CardProps): React.JSX.Element {
             disabled={!canSubmit}
             onClick={handleSignInWithMicrosoft}
           >
-            <MicrosoftLogo
-              width="20"
-              height="20"
-            />
+            <div className="relative w-5 h-5">
+              <Image 
+                src="/microsoft-logo.svg" 
+                alt="Microsoft logo"
+                width={20}
+                height={20}
+              />
+            </div>
             Microsoft
           </Button>
         </div>

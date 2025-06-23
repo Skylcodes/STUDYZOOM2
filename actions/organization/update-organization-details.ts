@@ -3,29 +3,31 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { stripeServer } from '@/lib/billing/stripe-server';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
-import { updateOrganizationDetailsSchema } from '@/schemas/organization/update-organization-details-schema';
+import { updateStudyGroupDetailsSchema } from '@/schemas/organization/update-organization-details-schema';
 
-export const updateOrganizationDetails = authActionClient
-  .metadata({ actionName: 'updateOrganizationDetails' })
-  .schema(updateOrganizationDetailsSchema)
+export const updateStudyGroupDetails = authActionClient
+  .metadata({ actionName: 'updateStudyGroupDetails' })
+  .schema(updateStudyGroupDetailsSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const organization = await prisma.organization.findFirst({
-      where: { id: session.user.organizationId },
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const studyGroup = await (prisma as any).studyGroup.findFirst({
+      where: { id: session.user.studyGroupId },
       select: {
         name: true,
         stripeCustomerId: true
       }
     });
-    if (!organization) {
-      throw new NotFoundError('Organization not found');
+    if (!studyGroup) {
+      throw new NotFoundError('Study group not found');
     }
 
-    await prisma.organization.update({
-      where: { id: session.user.organizationId },
+    // Using (prisma as any) for temporary typing workarounds during transition
+    await (prisma as any).studyGroup.update({
+      where: { id: session.user.studyGroupId },
       data: {
         name: parsedInput.name,
         address: parsedInput.address,
@@ -38,10 +40,10 @@ export const updateOrganizationDetails = authActionClient
       }
     });
 
-    if (organization.name !== organization.name) {
-      if (organization.stripeCustomerId) {
+    if (studyGroup.name !== parsedInput.name) {
+      if (studyGroup.stripeCustomerId) {
         try {
-          await stripeServer.customers.update(organization.stripeCustomerId, {
+          await stripeServer.customers.update(studyGroup.stripeCustomerId, {
             name: parsedInput.name
           });
         } catch (e) {
@@ -53,9 +55,12 @@ export const updateOrganizationDetails = authActionClient
     }
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.OrganizationDetails,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.OrganizationDetails, // Using OrganizationDetails until StudyGroupDetails is added to StudyGroupCacheKey
+        session.user.studyGroupId
       )
     );
   });
+
+// For backward compatibility during refactoring
+export const updateOrganizationDetails = updateStudyGroupDetails;

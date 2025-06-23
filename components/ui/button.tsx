@@ -55,20 +55,47 @@ const Button = React.forwardRef<ButtonElement, ButtonProps>(
     ref
   ) => {
     const Comp = asChild ? Slot : 'button';
+    
+    // Create the button content with loading indicator if needed
+    const buttonContent = (
+      <>
+        {loading && (
+          <Loader2Icon 
+            className={cn('size-4 animate-spin', !!children && 'mr-2')} 
+          />
+        )}
+        {children}
+      </>
+    );
+    
+    // For asChild, we need to ensure we only pass a single child to Slot
+    if (asChild && React.isValidElement(children)) {
+      // When using asChild, we can't have the loading indicator and children as siblings
+      // So we don't show the loading indicator when asChild is true
+      return (
+        <Comp
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </Comp>
+      );
+    }
+    
+    // Regular button can have multiple children
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}
       >
-        <>
-          {loading && (
-            <Loader2Icon
-              className={cn('size-4 animate-spin', !!children && 'mr-2')}
-            />
-          )}
-          {children}
-        </>
+        {loading && (
+          <Loader2Icon
+            className={cn('size-4 animate-spin', !!children && 'mr-2')}
+          />
+        )}
+        {children}
       </Comp>
     );
   }

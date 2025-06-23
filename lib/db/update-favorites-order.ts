@@ -1,32 +1,33 @@
-import { type Prisma } from '@prisma/client';
-
 import { prisma } from '@/lib/db/prisma';
 
-export function updateFavoritesOrder(
-  userId?: string
-): Prisma.PrismaPromise<number> {
-  if (userId) {
-    return prisma.$executeRawUnsafe(
-      `UPDATE "public"."Favorite"
-        SET "order" = numbered_table.new_order
-        FROM (
-          SELECT id, ROW_NUMBER() OVER (ORDER BY "order" ASC) AS new_order
-          FROM "public"."Favorite"
-          WHERE "public"."Favorite"."userId" = $1::uuid
-        ) numbered_table
-        WHERE "public"."Favorite".id = numbered_table.id
-        AND "public"."Favorite"."userId" = $1::uuid;`,
+/**
+ * Updates the order of favorites after removing one
+ * This ensures that favorites maintain a continuous sequence of order values
+ * @param userId The user ID whose favorites need reordering
+ */
+export async function updateFavoritesOrder(userId: string): Promise<void> {
+  // Get all remaining favorites for the user
+  const favorites = await prisma.favorite.findMany({
+    where: {
       userId
-    );
-  }
+    },
+    orderBy: {
+      order: 'asc'
+    }
+  });
 
-  return prisma.$executeRawUnsafe(
-    `UPDATE "public"."Favorite"
-      SET "order" = numbered_table.new_order
-      FROM (
-        SELECT id, ROW_NUMBER() OVER (PARTITION BY "userId" ORDER BY "order" ASC) AS new_order
-        FROM "public"."Favorite"
-      ) numbered_table
-      WHERE "public"."Favorite".id = numbered_table.id;`
-  );
+  // Update each favorite with a new sequential order
+  const updatePromises = favorites.map((favorite, index) => {
+    return prisma.favorite.update({
+      where: {
+        id: favorite.id
+      },
+      data: {
+        order: index + 1
+      }
+    });
+  });
+
+  // Execute all updates in parallel
+  await Promise.all(updatePromises);
 }

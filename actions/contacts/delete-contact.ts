@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey, UserCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey, UserCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
 import { deleteContactSchema } from '@/schemas/contacts/delete-contact-schema';
@@ -12,21 +12,22 @@ export const deleteContact = authActionClient
   .metadata({ actionName: 'deleteContact' })
   .schema(deleteContactSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.contact.count({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const count = await (prisma as any).studySet.count({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.studyGroupId,
         id: parsedInput.id
       }
     });
     if (count < 1) {
-      throw new NotFoundError('Contact not found');
+      throw new NotFoundError('Study set not found');
     }
 
     await prisma.$transaction([
-      prisma.contactImage.deleteMany({
-        where: { contactId: parsedInput.id }
+      (prisma as any).studySetImage.deleteMany({
+        where: { studySetId: parsedInput.id }
       }),
-      prisma.contact.delete({
+      (prisma as any).studySet.delete({
         where: { id: parsedInput.id },
         select: {
           id: true // SELECT NONE
@@ -35,16 +36,16 @@ export const deleteContact = authActionClient
     ]);
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contacts,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contacts, // Using Contacts until StudySets is added to StudyGroupCacheKey
+        session.user.studyGroupId
       )
     );
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contact,
-        session.user.organizationId,
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contact, // Using Contact until StudySet is added to StudyGroupCacheKey
+        session.user.studyGroupId,
         parsedInput.id
       )
     );

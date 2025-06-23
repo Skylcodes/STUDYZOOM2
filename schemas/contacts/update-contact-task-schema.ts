@@ -1,7 +1,8 @@
-import { ContactTaskStatus } from '@prisma/client';
+import { ActionItemStatus } from '../../types/prisma-mappings';
 import { z } from 'zod';
 
-export const updateContactTaskSchema = z.object({
+// Schema for updating action items (formerly contact tasks)
+export const updateActionItemSchema = z.object({
   id: z
     .string({
       required_error: 'Id is required.',
@@ -28,10 +29,14 @@ export const updateContactTaskSchema = z.object({
     .optional()
     .or(z.literal('')),
   dueDate: z.coerce.date().optional(),
-  status: z.nativeEnum(ContactTaskStatus, {
+  status: z.nativeEnum(ActionItemStatus, {
     required_error: 'Status is required',
     invalid_type_error: 'Status must be a string'
   })
 });
 
-export type UpdateContactTaskSchema = z.infer<typeof updateContactTaskSchema>;
+export type UpdateActionItemSchema = z.infer<typeof updateActionItemSchema>;
+
+// For backward compatibility during refactoring
+export const updateContactTaskSchema = updateActionItemSchema;
+export type UpdateContactTaskSchema = UpdateActionItemSchema;

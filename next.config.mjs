@@ -1,6 +1,7 @@
 import { withContentCollections } from '@content-collections/next';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import { createSecureHeaders } from 'next-secure-headers';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const bundleAnalyzerConfig = withBundleAnalyzer({
   enabled: process.env.BUNDLE_ANALYZER === 'true'
@@ -55,10 +56,19 @@ const nextConfig = {
         hostname: 'plus.unsplash.com',
         port: '',
         pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.unsplash.com',
+        port: '',
+        pathname: '**',
       }
     ],
+    domains: ['images.unsplash.com', 'plus.unsplash.com'],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   reactStrictMode: true,
   poweredByHeader: false,
@@ -119,4 +129,15 @@ const nextConfig = {
   }
 };
 
-export default withContentCollections(bundleAnalyzerConfig(nextConfig));
+// Apply content collections and bundle analyzer
+const configWithPlugins = withContentCollections(bundleAnalyzerConfig(nextConfig));
+
+// Sentry configuration
+const sentryWebpackPluginOptions = {
+  // Additional options for the Sentry Webpack plugin
+  silent: true, // Suppresses all logs
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+};
+
+export default withSentryConfig(configWithPlugins, sentryWebpackPluginOptions);

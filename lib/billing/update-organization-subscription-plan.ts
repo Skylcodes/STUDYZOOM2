@@ -4,13 +4,14 @@ import { stripeServer } from '@/lib/billing/stripe-server';
 import { prisma } from '@/lib/db/prisma';
 import type { Maybe } from '@/types/maybe';
 
-export async function updateOrganizationSubscriptionPlan(
+// Domain-aligned function for updating study group subscription plan
+export async function updateStudyGroupSubscriptionPlan(
   stripeCustomerId: Maybe<string>
 ): Promise<void> {
   if (!stripeCustomerId) {
     return;
   }
-  const organization = await prisma.organization.findFirst({
+  const organization = await (prisma as any).studyGroup.findFirst({
     where: { stripeCustomerId },
     select: {
       id: true,
@@ -31,9 +32,12 @@ export async function updateOrganizationSubscriptionPlan(
   const tier = mapSubscriptionToTier(subscription);
 
   if (tier !== organization.tier) {
-    await prisma.organization.update({
+    await (prisma as any).studyGroup.update({
       where: { id: organization.id },
       data: { tier }
     });
   }
 }
+
+// For backward compatibility during refactoring
+export const updateOrganizationSubscriptionPlan = updateStudyGroupSubscriptionPlan;

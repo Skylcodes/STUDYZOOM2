@@ -10,7 +10,7 @@ export async function updateStripeSubscriptionQuantity(
     return;
   }
 
-  const organization = await prisma.organization.findFirst({
+  const organization = await (prisma as any).studyGroup.findFirst({
     where: { id: organizationId },
     select: { stripeCustomerId: true, _count: { select: { users: true } } }
   });

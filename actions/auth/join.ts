@@ -1,84 +1,78 @@
-'use server';
+import 'server-only';
 
-import { revalidateTag } from 'next/cache';
-import { InvitationStatus } from '@prisma/client';
+import { hash } from '@node-rs/bcrypt';
+import { revalidatePath } from 'next/cache';
 
-import { actionClient } from '@/actions/safe-action';
-import { Routes } from '@/constants/routes';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
-import { signIn } from '@/lib/auth';
-import { joinOrganization } from '@/lib/auth/organization';
-import { hashPassword } from '@/lib/auth/password';
+import { authActionClient } from '@/actions/auth/auth-action-client';
 import { prisma } from '@/lib/db/prisma';
-import { NotFoundError, PreConditionError } from '@/lib/validation/exceptions';
 import { joinSchema } from '@/schemas/auth/join-schema';
-import { IdentityProvider } from '@/types/identity-provider';
 
-export const join = actionClient
-  .metadata({ actionName: 'join' })
-  .schema(joinSchema)
-  .action(async ({ parsedInput }) => {
-    const invitation = await prisma.invitation.findFirst({
-      where: { id: parsedInput.invitationId },
-      select: {
-        status: true,
-        email: true,
-        role: true,
-        organizationId: true
+export const join = authActionClient(
+  async ({ session, input }) => {
+    const result = joinSchema.safeParse(input);
+    if (!result.success) {
+      return {
+        error: 'Invalid input'
+      };
+    }
+
+    const { invitationId, password } = result.data;
+
+    // Find the invitation
+    const invitation = await prisma.invitation.findUnique({
+      where: {
+        id: invitationId,
+        status: 'PENDING'
       }
     });
+
     if (!invitation) {
-      throw new NotFoundError('Invitation not found');
-    }
-    if (invitation.status === InvitationStatus.REVOKED) {
-      throw new PreConditionError('Invitation was revoked');
-    }
-    if (invitation.status === InvitationStatus.ACCEPTED) {
-      throw new PreConditionError('Invitation was already accepted');
-    }
-    const countOrganization = await prisma.organization.count({
-      where: { id: invitation.organizationId }
-    });
-    if (countOrganization < 1) {
-      throw new NotFoundError('Organization not found');
+      return {
+        error: 'Invitation not found or already used'
+      };
     }
 
-    const normalizedEmail = invitation.email.toLowerCase();
-    const hashedPassword = await hashPassword(parsedInput.password);
-
-    const existingUser = await prisma.user.findFirst({
-      where: { email: normalizedEmail }
+    // Check if the user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        email: invitation.email
+      }
     });
+
     if (existingUser) {
-      throw new PreConditionError('Email address is already registered');
+      return {
+        error: 'User already exists'
+      };
     }
 
-    await joinOrganization({
-      invitationId: parsedInput.invitationId,
-      organizationId: invitation.organizationId,
-      name: parsedInput.name,
-      normalizedEmail,
-      hashedPassword,
-      role: invitation.role
+    // Hash the password
+    const hashedPassword = await hash(password, 10);
+
+    // Create the user
+    await prisma.user.create({
+      data: {
+        email: invitation.email,
+        name: invitation.name,
+        password: hashedPassword,
+        studyGroupId: invitation.studyGroupId,
+        role: 'MEMBER'
+      }
     });
 
-    revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Members,
-        invitation.organizationId
-      )
-    );
-    revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Invitations,
-        invitation.organizationId
-      )
-    );
-
-    return await signIn(IdentityProvider.Credentials, {
-      email: parsedInput.email,
-      password: parsedInput.password,
-      redirect: true,
-      redirectTo: Routes.Onboarding
+    // Update the invitation status
+    await prisma.invitation.update({
+      where: {
+        id: invitationId
+      },
+      data: {
+        status: 'ACCEPTED'
+      }
     });
-  });
+
+    // Revalidate paths
+    revalidatePath('/auth/login');
+    revalidatePath('/invitations');
+
+    return { success: true };
+  }
+);

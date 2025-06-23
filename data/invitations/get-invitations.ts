@@ -2,12 +2,14 @@ import 'server-only';
 
 import { unstable_cache as cache } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { InvitationStatus } from '@prisma/client';
+// Import from prisma-mappings instead of @prisma/client
+import { InviteStatus } from '@/types/prisma-mappings';
 
 import {
   Caching,
   defaultRevalidateTimeInSeconds,
-  OrganizationCacheKey
+  OrganizationCacheKey,
+  StudyGroupCacheKey
 } from '@/data/caching';
 import { dedupedAuth } from '@/lib/auth';
 import { getLoginRedirect } from '@/lib/auth/redirect';
@@ -24,10 +26,10 @@ export async function getInvitations(): Promise<InvitationDto[]> {
 
   return cache(
     async () => {
-      const invitations = await prisma.invitation.findMany({
+      const invitations = await (prisma as any).studyGroupInvite.findMany({
         where: {
-          organizationId: session.user.organizationId,
-          NOT: { status: { equals: InvitationStatus.ACCEPTED } }
+          studyGroupId: session.user.studyGroupId || session.user.organizationId,
+          NOT: { status: { equals: InviteStatus.ACCEPTED } }
         },
         select: {
           id: true,
@@ -55,16 +57,16 @@ export async function getInvitations(): Promise<InvitationDto[]> {
 
       return response;
     },
-    Caching.createOrganizationKeyParts(
-      OrganizationCacheKey.Invitations,
-      session.user.organizationId
+    Caching.createStudyGroupKeyParts(
+      StudyGroupCacheKey.Invitations,
+      session.user.studyGroupId || session.user.organizationId
     ),
     {
       revalidate: defaultRevalidateTimeInSeconds,
       tags: [
-        Caching.createOrganizationTag(
-          OrganizationCacheKey.Invitations,
-          session.user.organizationId
+        Caching.createStudyGroupTag(
+          StudyGroupCacheKey.Invitations,
+          session.user.studyGroupId || session.user.organizationId
         )
       ]
     }

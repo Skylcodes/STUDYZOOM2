@@ -69,7 +69,7 @@ export const providers = [
         where: { email: normalizedEmail },
         select: {
           id: true,
-          organizationId: true,
+          // organizationId no longer used
           password: true,
           email: true,
           emailVerified: true,
@@ -95,7 +95,9 @@ export const providers = [
 
       return {
         id: user.id,
-        organizationId: user.organizationId,
+        // Include both for backward compatibility
+        organizationId: undefined,
+        studyGroupId: undefined,
         email: user.email,
         name: user.name
       };
@@ -121,7 +123,7 @@ export const providers = [
         throw new InternalServerError();
       }
 
-      if (!credentials.totpCode) {
+      if (!credentials.token || !credentials.totpCode) {
         throw new IncorrectTotpCodeError();
       }
 
@@ -145,15 +147,14 @@ export const providers = [
         where: { id: userId },
         select: {
           id: true,
-          organizationId: true,
+          // organizationId no longer used
           password: true,
           email: true,
           emailVerified: true,
           name: true,
           authenticatorApp: {
             select: {
-              secret: true,
-              recoveryCodes: true
+              secret: true
             }
           }
         }
@@ -168,35 +169,33 @@ export const providers = [
         throw new InternalServerError();
       }
 
+      if (!user.authenticatorApp.secret) {
+        throw new InternalServerError();
+      }
+
       const secret = symmetricDecrypt(
         user.authenticatorApp.secret,
         process.env.AUTH_SECRET
       );
-      if (secret.length !== 32) {
-        console.error(
-          `Authenticator app secret decryption failed. Expected key with length 32 but got ${secret.length}`
-        );
-        throw new InternalServerError();
-      }
-
       const authenticator = new Authenticator({
         createDigest,
         createRandomBytes,
         keyDecoder,
-        keyEncoder,
-        window: [1, 0]
+        keyEncoder
       });
-      const isValidToken = authenticator.check(
-        parsedCredentials.totpCode,
+      const isValid2FA = authenticator.verify({
+        token: parsedCredentials.totpCode,
         secret
-      );
-      if (!isValidToken) {
+      });
+      if (!isValid2FA) {
         throw new IncorrectTotpCodeError();
       }
 
       return {
         id: user.id,
-        organizationId: user.organizationId,
+        // Include both for backward compatibility
+        organizationId: undefined,
+        studyGroupId: undefined,
         email: user.email,
         name: user.name
       };
@@ -212,7 +211,7 @@ export const providers = [
     async authorize(credentials) {
       if (!process.env.AUTH_SECRET) {
         console.error(
-          'Missing encryption key; cannot proceed with TOTP code login.'
+          'Missing encryption key; cannot proceed with recovery code login.'
         );
         throw new InternalServerError();
       }
@@ -246,7 +245,7 @@ export const providers = [
         where: { id: userId },
         select: {
           id: true,
-          organizationId: true,
+          // organizationId no longer used
           password: true,
           email: true,
           emailVerified: true,
@@ -304,7 +303,9 @@ export const providers = [
 
       return {
         id: user.id,
-        organizationId: user.organizationId,
+        // Include both for backward compatibility
+        organizationId: undefined,
+        studyGroupId: undefined,
         email: user.email,
         name: user.name
       };
@@ -349,7 +350,10 @@ export const providers = [
       return {
         id: profile.sub,
         name: profile.name,
-        email: profile.email
+        email: profile.email,
+        // Include both for backward compatibility
+        organizationId: undefined,
+        studyGroupId: undefined
       } as User;
     }
   })

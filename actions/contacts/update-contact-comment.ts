@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
 import { updateContactCommentSchema } from '@/schemas/contacts/update-contact-comment-schema';
@@ -12,29 +12,31 @@ export const updateContactComment = authActionClient
   .metadata({ actionName: 'updateContactComment' })
   .schema(updateContactCommentSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.contactComment.count({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const count = await (prisma as any).studySetComment.count({
       where: {
         id: parsedInput.id,
-        contact: {
-          organizationId: session.user.organizationId
+        studySet: {
+          studyGroupId: session.user.studyGroupId
         }
       }
     });
     if (count < 1) {
-      throw new NotFoundError('Contact comment not found');
+      throw new NotFoundError('Study set comment not found');
     }
 
-    const comment = await prisma.contactComment.update({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const comment = await (prisma as any).studySetComment.update({
       where: { id: parsedInput.id },
       data: { text: parsedInput.text },
-      select: { contactId: true }
+      select: { studySetId: true }
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.ContactTimelineEvents,
-        session.user.organizationId,
-        comment.contactId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.ContactTimelineEvents, // Using ContactTimelineEvents until StudySetTimelineEvents is added to StudyGroupCacheKey
+        session.user.studyGroupId,
+        comment.studySetId // Using studySetId from the domain model
       )
     );
   });

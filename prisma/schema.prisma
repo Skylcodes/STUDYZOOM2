@@ -29,20 +29,6 @@ model Account {
   @@index([userId], map: "IX_Account_userId")
 }
 
-model ApiKey {
-  id             String       @id(map: "PK_ApiKey") @default(uuid()) @db.Uuid
-  organizationId String       @db.Uuid
-  description    String       @db.VarChar(70)
-  hashedKey      String       @unique
-  expiresAt      DateTime?
-  lastUsedAt     DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId], map: "IX_ApiKey_organizationId")
-}
-
 model AuthenticatorApp {
   id            String   @id(map: "PK_AuthenticatorApp") @default(uuid()) @db.Uuid
   userId        String   @unique @db.Uuid
@@ -70,197 +56,30 @@ model ChangeEmailRequest {
   @@index([userId], map: "IX_ChangeEmailRequest_userId")
 }
 
-model Contact {
-  id             String             @id(map: "PK_Contact") @default(uuid()) @db.Uuid
-  organizationId String             @db.Uuid
-  record         ContactRecord      @default(PERSON)
-  image          String?            @db.VarChar(2048)
-  name           String             @db.VarChar(255)
-  email          String?            @db.VarChar(255)
-  address        String?            @db.VarChar(255)
-  phone          String?            @db.VarChar(32)
-  stage          ContactStage       @default(LEAD)
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  activities     ContactActivity[]
-  comments       ContactComment[]
-  notes          ContactNote[]
-  pageVisits     ContactPageVisit[]
-  tasks          ContactTask[]
-  favorites      Favorite[]
-  tags           ContactTag[]       @relation("ContactToContactTag")
-
-  @@index([organizationId], map: "IX_Contact_organizationId")
-}
-
-model ContactActivity {
-  id         String     @id(map: "PK_ContactActivity") @default(uuid()) @db.Uuid
-  contactId  String     @db.Uuid
-  actionType ActionType
-  actorId    String     @db.VarChar(255)
-  actorType  ActorType
-  metadata   Json?
-  occurredAt DateTime   @default(now())
-  contact    Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
-
-  @@index([contactId], map: "IX_ContactActivity_contactId")
-  @@index([occurredAt], map: "IX_ContactActivity_occurredAt")
-}
-
-model ContactComment {
-  id        String   @id(map: "PK_ContactComment") @default(uuid()) @db.Uuid
-  contactId String   @db.Uuid
-  userId    String   @db.Uuid
-  text      String   @db.VarChar(2000)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([contactId], map: "IX_ContactComment_contactId")
-  @@index([userId], map: "IX_ContactComment_userId")
-}
-
-model ContactImage {
-  id          String  @id(map: "PK_ContactImage") @default(uuid()) @db.Uuid
-  contactId   String  @db.Uuid
-  data        Bytes?
-  contentType String? @db.VarChar(255)
-  hash        String? @db.VarChar(64)
-
-  @@index([contactId], map: "IX_ContactImage_contactId")
-}
-
-model ContactNote {
-  id        String   @id(map: "PK_ContactNote") @default(uuid()) @db.Uuid
-  contactId String   @db.Uuid
-  userId    String   @db.Uuid
-  text      String?  @db.VarChar(8000)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([contactId], map: "IX_ContactNote_contactId")
-  @@index([userId], map: "IX_ContactNote_userId")
-}
-
-model ContactPageVisit {
-  id        String   @id(map: "PK_ContactPageVisit") @default(uuid()) @db.Uuid
-  contactId String   @db.Uuid
-  userId    String?  @db.Uuid
-  timestamp DateTime @default(now())
-  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  user      User?    @relation(fields: [userId], references: [id])
-
-  @@index([contactId], map: "IX_ContactPageVisit_contactId")
-  @@index([userId], map: "IX_ContactPageVisit_userId")
-}
-
-model ContactTag {
-  id       String    @id(map: "PK_ContactTag") @default(uuid()) @db.Uuid
-  text     String    @unique @db.VarChar(128)
-  contacts Contact[] @relation("ContactToContactTag")
-}
-
-model ContactTask {
-  id          String            @id(map: "PK_ContactTask") @default(uuid()) @db.Uuid
-  contactId   String            @db.Uuid
-  title       String            @db.VarChar(255)
-  description String?           @db.VarChar(8000)
-  status      ContactTaskStatus @default(OPEN)
-  dueDate     DateTime?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  contact     Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
-
-  @@index([contactId], map: "IX_ContactTask_contactId")
-}
-
-model Favorite {
-  id        String  @id(map: "PK_Favorite") @default(uuid()) @db.Uuid
-  userId    String  @db.Uuid
-  contactId String  @db.Uuid
-  order     Int     @default(0)
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId], map: "IX_Favorite_userId")
-  @@index([contactId], map: "IX_Favorite_contactId")
-}
-
 model Feedback {
   id             String           @id(map: "PK_Feedback") @default(uuid()) @db.Uuid
-  organizationId String           @db.Uuid
-  userId         String?          @db.Uuid
+  userId         String           @db.Uuid
   category       FeedbackCategory @default(SUGGESTION)
   message        String           @db.VarChar(4000)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User?            @relation(fields: [userId], references: [id])
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([organizationId], map: "IX_Feedback_organizationId")
   @@index([userId], map: "IX_Feedback_userId")
-}
-
-model Invitation {
-  id             String           @id(map: "PK_Invitation") @default(uuid()) @db.Uuid
-  organizationId String           @db.Uuid
-  token          String           @default(uuid()) @db.Uuid
-  email          String           @db.VarChar(255)
-  role           Role             @default(MEMBER)
-  status         InvitationStatus @default(PENDING)
-  lastSentAt     DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId], map: "IX_Invitation_organizationId")
-  @@index([token], map: "IX_Invitation_token")
 }
 
 model Notification {
   id        String    @id(map: "PK_Notification") @default(uuid()) @db.Uuid
   userId    String    @db.Uuid
-  subject   String?   @db.VarChar(128)
-  content   String    @db.VarChar(8000)
-  link      String?   @db.VarChar(2000)
-  seenAt    DateTime?
-  dismissed Boolean   @default(false)
+  title     String    @db.VarChar(255)
+  message   String    @db.VarChar(4000)
+  read      Boolean   @default(false)
+  readAt    DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "IX_Notification_userId")
-}
-
-model Organization {
-  id                  String       @id(map: "PK_Organization") @default(uuid()) @db.Uuid
-  stripeCustomerId    String
-  name                String       @db.VarChar(255)
-  address             String?      @db.VarChar(255)
-  phone               String?      @db.VarChar(32)
-  email               String?      @db.VarChar(255)
-  website             String?      @db.VarChar(2000)
-  completedOnboarding Boolean      @default(false)
-  tier                String       @default("free") @db.VarChar(255)
-  facebookPage        String?      @db.VarChar(2000)
-  instagramProfile    String?      @db.VarChar(2000)
-  linkedInProfile     String?      @db.VarChar(2000)
-  tikTokProfile       String?      @db.VarChar(2000)
-  xProfile            String?      @db.VarChar(2000)
-  youTubeChannel      String?      @db.VarChar(2000)
-  apiKeys             ApiKey[]
-  contacts            Contact[]
-  feedback            Feedback[]
-  invitations         Invitation[]
-  users               User[]
-  webhooks            Webhook[]
-  businessHours       WorkHours[]
-
-  @@index([stripeCustomerId], map: "IX_Organization_stripeCustomerId")
 }
 
 model ResetPasswordRequest {
@@ -287,37 +106,36 @@ model Session {
 
 model User {
   id                           String               @id(map: "PK_User") @default(uuid()) @db.Uuid
-  organizationId               String?              @db.Uuid
   image                        String?              @db.VarChar(2048)
   name                         String               @db.VarChar(64)
   email                        String?              @unique
   emailVerified                DateTime?
   password                     String?              @db.VarChar(60)
   lastLogin                    DateTime?
-  role                         Role                 @default(MEMBER)
+  role                         Role                 @default(STUDENT)
   phone                        String?              @db.VarChar(32)
   locale                       String               @default("en-US") @db.VarChar(8)
   completedOnboarding          Boolean              @default(false)
-  enabledContactsNotifications Boolean              @default(false)
-  enabledInboxNotifications    Boolean              @default(false)
   enabledWeeklySummary         Boolean              @default(false)
   enabledNewsletter            Boolean              @default(false)
   enabledProductUpdates        Boolean              @default(false)
+  studyGroupId                 String?              @db.Uuid
+  organizationId               String?              @db.Uuid // Keeping for backward compatibility
   createdAt                    DateTime             @default(now())
   updatedAt                    DateTime             @updatedAt
   accounts                     Account[]
   authenticatorApp             AuthenticatorApp?
   changeEmailRequests          ChangeEmailRequest[]
-  comments                     ContactComment[]
-  notes                        ContactNote[]
-  pageVisits                   ContactPageVisit[]
-  favorites                    Favorite[]
   feedback                     Feedback[]
   notifications                Notification[]
   sessions                     Session[]
-  organization                 Organization?        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId], map: "IX_User_organizationId")
+  studySets                    StudySet[]
+  categories                   Category[]
+  studyGroup                   StudyGroup?          @relation(fields: [studyGroupId], references: [id])
+  studyGroupInvites            StudyGroupInvite[]
+  actionItems                  ActionItem[]
+  contacts                     Contact[]
+  securityAuditLogs            SecurityAuditLog[]
 }
 
 model UserImage {
@@ -339,100 +157,217 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Webhook {
-  id             String           @id(map: "PK_Webhook") @default(uuid()) @db.Uuid
-  organizationId String           @db.Uuid
-  url            String           @db.VarChar(2000)
-  triggers       WebhookTrigger[]
-  secret         String?          @db.VarChar(1024)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId], map: "IX_Webhook_organizationId")
-}
-
-model WorkHours {
-  id             String         @id(map: "PK_WorkHours") @default(uuid()) @db.Uuid
-  organizationId String         @db.Uuid
-  dayOfWeek      DayOfWeek      @default(SUNDAY)
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  timeSlots      WorkTimeSlot[]
-
-  @@index([organizationId], map: "IX_WorkHours_organizationId")
-}
-
-model WorkTimeSlot {
-  id          String    @id(map: "PK_WorkTimeSlot") @default(uuid()) @db.Uuid
-  workHoursId String    @db.Uuid
-  start       DateTime  @db.Time(0)
-  end         DateTime  @db.Time(0)
-  workHours   WorkHours @relation(fields: [workHoursId], references: [id], onDelete: Cascade)
-
-  @@index([workHoursId], map: "IX_WorkTimeSlot_workHoursId")
-}
-
-enum ActionType {
-  CREATE @map("create")
-  UPDATE @map("update")
-  DELETE @map("delete")
-}
-
-enum ActorType {
-  SYSTEM @map("system")
-  MEMBER @map("member")
-  API    @map("api")
-}
-
-enum ContactRecord {
-  PERSON  @map("person")
-  COMPANY @map("company")
-}
-
-enum ContactStage {
-  LEAD           @map("lead")
-  QUALIFIED      @map("qualified")
-  OPPORTUNITY    @map("opportunity")
-  PROPOSAL       @map("proposal")
-  IN_NEGOTIATION @map("inNegotiation")
-  LOST           @map("lost")
-  WON            @map("won")
-}
-
-enum ContactTaskStatus {
-  OPEN      @map("open")
-  COMPLETED @map("completed")
-}
-
-enum DayOfWeek {
-  SUNDAY    @map("sunday")
-  MONDAY    @map("monday")
-  TUESDAY   @map("tuesday")
-  WEDNESDAY @map("wednesday")
-  THURSDAY  @map("thursday")
-  FRIDAY    @map("friday")
-  SATURDAY  @map("saturday")
-}
-
 enum FeedbackCategory {
   SUGGESTION @map("suggestion")
   PROBLEM    @map("problem")
   QUESTION   @map("question")
 }
 
-enum InvitationStatus {
-  PENDING  @map("pending")
-  ACCEPTED @map("accepted")
-  REVOKED  @map("revoked")
-}
-
 enum Role {
+  STUDENT @map("student")
+  INSTRUCTOR @map("instructor")
   MEMBER @map("member")
   ADMIN  @map("admin")
 }
 
-enum WebhookTrigger {
-  CONTACT_CREATED @map("contactCreated")
-  CONTACT_UPDATED @map("contactUpdated")
-  CONTACT_DELETED @map("contactDeleted")
+model Category {
+  id          String     @id @default(uuid()) @db.Uuid
+  name        String
+  userId      String     @db.Uuid
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studySets   StudySet[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// Renamed from Document to StudySet for better domain alignment
+model StudySet {
+  id          String    @id @default(uuid()) @db.Uuid @map("Document")
+  title       String
+  filePath    String?
+  fileType    String?   // MIME type of the uploaded file
+  fileSize    Int?      // Size in bytes
+  content     Json?     // For storing extracted text or other data
+  notes       String?   @db.Text // User's personal notes on the document
+  uploadDate  DateTime  @default(now())
+  userId      String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String?   @db.Uuid
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  topicTags   TopicTag[] @relation("StudySetToTopicTag")
+  actionItems ActionItem[]
+  
+  // AI-generated content
+  flashcards  Json?     // Array of flashcard objects
+  quiz        Json?     // Quiz questions and answers
+  summary     String?   @db.Text // AI-generated summary
+  podcast     String?   // URL to generated audio file
+  generatedAt DateTime? // When AI content was last generated
+  
+  // Related materials
+  studyMaterials StudyMaterial[]
+
+  @@index([userId])
+  @@index([categoryId])
+}
+
+// Renamed from ContactTag to TopicTag
+model TopicTag {
+  id          String     @id @default(uuid()) @db.Uuid @map("ContactTag")
+  name        String
+  color       String?    // For UI display
+  userId      String     @db.Uuid
+  studySets   StudySet[] @relation("StudySetToTopicTag")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// Renamed from ContactTask to ActionItem
+model ActionItem {
+  id          String          @id @default(uuid()) @db.Uuid @map("ContactTask")
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      ActionItemStatus @default(TODO)
+  userId      String          @db.Uuid
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studySetId  String?         @db.Uuid
+  studySet    StudySet?       @relation(fields: [studySetId], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([studySetId])
+}
+
+// Renamed from Organization to StudyGroup
+model StudyGroup {
+  id          String            @id @default(uuid()) @db.Uuid @map("Organization")
+  name        String
+  description String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  members     User[]
+  invites     StudyGroupInvite[]
+
+  @@index([name])
+}
+
+// Renamed from Invitation to StudyGroupInvite
+model StudyGroupInvite {
+  id           String             @id @default(uuid()) @db.Uuid @map("Invitation")
+  email        String
+  name         String?
+  token        String             @unique
+  status       InviteStatus       @default(PENDING)
+  role         Role               @default(STUDENT)
+  expires      DateTime
+  studyGroupId String             @db.Uuid
+  studyGroup   StudyGroup         @relation(fields: [studyGroupId], references: [id], onDelete: Cascade)
+  userId       String?            @db.Uuid
+  user         User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([studyGroupId])
+  @@index([userId])
+  @@index([email])
+  @@index([token])
+}
+
+// New enums for STUDYZOOM domain
+enum ActionItemStatus {
+  TODO        @map("todo")
+  IN_PROGRESS @map("in_progress")
+  COMPLETED   @map("completed")
+  REVIEW      @map("review")
+}
+
+enum InviteStatus {
+  PENDING   @map("pending")
+  ACCEPTED  @map("accepted")
+  DECLINED  @map("declined")
+  REVOKED   @map("revoked")
+  EXPIRED   @map("expired")
+}
+
+enum DocumentType {
+  NOTE       @map("note")
+  SLIDES     @map("slides")
+  ASSIGNMENT @map("assignment")
+  FLASHCARD  @map("flashcard")
+  QUIZ       @map("quiz")
+}
+
+// Security audit log for tracking security-related events
+model SecurityAuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  action       String   // e.g., "access", "modify", "delete"
+  resourceType String   // e.g., "document", "flashcardSet", "quiz"
+  resourceId   String   // ID of the accessed resource
+  success      Boolean  // Whether the access was successful
+  details      String?  // JSON string with additional details
+  timestamp    DateTime // When the event occurred
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "security_audit_user_idx")
+  @@index([resourceType, resourceId], name: "security_audit_resource_idx")
+  @@index([timestamp], name: "security_audit_timestamp_idx")
+  @@index([success], name: "security_audit_success_idx")
+}
+
+// Contact model for storing user contacts/study partners
+model Contact {
+  id          String        @id @default(uuid()) @db.Uuid
+  userId      String        @db.Uuid
+  name        String        @db.VarChar(255)
+  email       String?       @db.VarChar(255)
+  phone       String?       @db.VarChar(32)
+  notes       String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  image       ContactImage?
+
+  @@index([userId])
+}
+
+// ContactImage model for storing contact profile images
+model ContactImage {
+  id          String   @id @default(uuid()) @db.Uuid
+  contactId   String   @unique @db.Uuid
+  data        Bytes?
+  contentType String?  @db.VarChar(255)
+  hash        String?  @db.VarChar(64)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+}
+
+// StudyMaterial model for storing uploaded study materials
+model StudyMaterial {
+  id          String   @id @default(uuid()) @db.Uuid
+  studySetId  String   @db.Uuid
+  fileName    String   @db.VarChar(255)
+  fileSize    Int
+  contentType String   @db.VarChar(255)
+  data        Bytes
+  hash        String?  @db.VarChar(64)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  studySet    StudySet @relation(fields: [studySetId], references: [id], onDelete: Cascade)
+
+  @@index([studySetId])
+  @@index([hash])
 }

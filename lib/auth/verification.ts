@@ -1,4 +1,4 @@
-import { InvitationStatus } from '@prisma/client';
+// No longer using invitation-related imports
 
 import { prisma } from '@/lib/db/prisma';
 
@@ -28,11 +28,7 @@ export async function cleanupVerificationRecords(email: string): Promise<void> {
     prisma.resetPasswordRequest.deleteMany({
       where: { email }
     }),
-    // Update invitations to accepted status
-    prisma.invitation.updateMany({
-      where: { email },
-      data: { status: InvitationStatus.ACCEPTED }
-    })
+    // No longer updating invitations as they've been removed
     // Note: We no longer update the user's emailVerified field here
     // as that is now handled during the verification process in verify-email-with-token.ts
   ]);

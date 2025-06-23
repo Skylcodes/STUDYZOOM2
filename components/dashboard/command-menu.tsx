@@ -13,8 +13,7 @@ import {
 } from '@/components/ui/command';
 import {
   accountNavItems,
-  mainNavItems,
-  organizationNavItems
+  mainNavItems
 } from '@/constants/nav-items';
 import { useEnhancedModal } from '@/hooks/use-enhanced-modal';
 
@@ -26,10 +25,6 @@ const navigationGroups = [
   {
     heading: 'Account',
     items: accountNavItems
-  },
-  {
-    heading: 'Organization',
-    items: organizationNavItems
   }
 ];
 

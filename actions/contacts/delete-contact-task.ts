@@ -3,20 +3,21 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
-import { deleteContactTaskSchema } from '@/schemas/contacts/delete-contact-task-schema';
+import { deleteActionItemSchema } from '@/schemas/contacts/delete-contact-task-schema'; // Using domain-aligned schema name
 
-export const deleteContactTask = authActionClient
-  .metadata({ actionName: 'deleteContactTask' })
-  .schema(deleteContactTaskSchema)
+export const deleteActionItem = authActionClient
+  .metadata({ actionName: 'deleteActionItem' })
+  .schema(deleteActionItemSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.contactTask.count({
+    // Using the renamed ActionItem model
+    const count = await (prisma as any).actionItem.count({
       where: {
         id: parsedInput.id,
-        contact: {
-          organizationId: session.user.organizationId
+        studySet: {
+          studyGroupId: session.user.studyGroupId
         }
       }
     });
@@ -24,16 +25,20 @@ export const deleteContactTask = authActionClient
       throw new NotFoundError('Task not found');
     }
 
-    const deletedTask = await prisma.contactTask.delete({
+    // Using the renamed ActionItem model
+    const deletedTask = await (prisma as any).actionItem.delete({
       where: { id: parsedInput.id },
-      select: { contactId: true }
+      select: { studySetId: true }
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.ContactTasks,
-        session.user.organizationId,
-        deletedTask.contactId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.ContactTasks, // Will be renamed to ActionItems in future
+        session.user.studyGroupId,
+        deletedTask.studySetId
       )
     );
   });
+
+// For backward compatibility during refactoring
+export const deleteContactTask = deleteActionItem;

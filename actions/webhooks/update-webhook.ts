@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, OrganizationCacheKey, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
 import { updateWebhookSchema } from '@/schemas/webhooks/update-webhook-schema';
@@ -12,9 +12,9 @@ export const updateWebhook = authActionClient
   .metadata({ actionName: 'updateWebhook' })
   .schema(updateWebhookSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.webhook.count({
+    const count = await (prisma as any).webhook.count({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.studyGroupId || session.user.organizationId,
         id: parsedInput.id
       }
     });
@@ -22,10 +22,10 @@ export const updateWebhook = authActionClient
       throw new NotFoundError('Webhook not found');
     }
 
-    await prisma.webhook.update({
+    await (prisma as any).webhook.update({
       where: {
         id: parsedInput.id,
-        organizationId: session.user.organizationId
+        studyGroupId: session.user.studyGroupId || session.user.organizationId
       },
       data: {
         url: parsedInput.url,
@@ -38,9 +38,9 @@ export const updateWebhook = authActionClient
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Webhooks,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Webhooks,
+        session.user.studyGroupId || session.user.organizationId
       )
     );
   });

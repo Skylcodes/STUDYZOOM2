@@ -18,9 +18,6 @@ Summary Tool – Creates easy-to-read bullet-point summaries.
 Quiz Generator – Builds multiple-choice, short-answer, and fill-in-the-blank quizzes.
 
 
-Practice Test Generator – Creates full-length mock exams with varied question types.
-
-
 Podcast Generator – Turns the document into an audio lesson (using AI voice).
 
 
@@ -141,19 +138,6 @@ Focuses more on weak areas.
 
 
 Skips mastered topics.
-
-
-🎮 Gamification
-XP points for completing tools, quizzes, and sessions.
-
-
-Badges for streaks, uploads, and performance.
-
-
-Daily/weekly challenges.
-
-
-Optional leaderboard for competitive studying.
 
 
 

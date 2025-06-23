@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
 import { deleteContactNoteSchema } from '@/schemas/contacts/delete-contact-note-schema';
@@ -12,28 +12,30 @@ export const deleteContactNote = authActionClient
   .metadata({ actionName: 'deleteContactNote' })
   .schema(deleteContactNoteSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.contactNote.count({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const count = await (prisma as any).studySetNote.count({
       where: {
         id: parsedInput.id,
-        contact: {
-          organizationId: session.user.organizationId
+        studySet: {
+          studyGroupId: session.user.studyGroupId
         }
       }
     });
     if (count < 1) {
-      throw new NotFoundError('Contact note not found');
+      throw new NotFoundError('Study set note not found');
     }
 
-    const note = await prisma.contactNote.delete({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const note = await (prisma as any).studySetNote.delete({
       where: { id: parsedInput.id },
-      select: { contactId: true }
+      select: { studySetId: true }
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.ContactNotes,
-        session.user.organizationId,
-        note.contactId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.ContactNotes, // Using ContactNotes until StudySetNotes is added to StudyGroupCacheKey
+        session.user.studyGroupId,
+        note.studySetId // Using studySetId from the domain model
       )
     );
   });

@@ -1,7 +1,7 @@
-import { Role } from '@prisma/client';
+import { Role } from '../../types/prisma-mappings';
 import { z } from 'zod';
 
-export const updateInvitationSchema = z.object({
+export const updateStudyGroupInviteSchema = z.object({
   id: z
     .string({
       required_error: 'Id is required.',
@@ -17,4 +17,8 @@ export const updateInvitationSchema = z.object({
   })
 });
 
-export type UpdateInvitationSchema = z.infer<typeof updateInvitationSchema>;
+export type UpdateStudyGroupInviteSchema = z.infer<typeof updateStudyGroupInviteSchema>;
+
+// For backward compatibility during refactoring
+export const updateInvitationSchema = updateStudyGroupInviteSchema;
+export type UpdateInvitationSchema = UpdateStudyGroupInviteSchema;

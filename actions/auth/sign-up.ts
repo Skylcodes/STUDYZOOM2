@@ -7,7 +7,7 @@ import { returnValidationErrors } from 'next-safe-action';
 import { actionClient } from '@/actions/safe-action';
 import { EMAIL_VERIFICATION_EXPIRY_HOURS } from '@/constants/limits';
 import { Routes } from '@/constants/routes';
-import { createUserWithOrganization } from '@/lib/auth/organization';
+import { createUser } from '@/lib/auth/user-creation';
 import { hashPassword } from '@/lib/auth/password';
 import { createHash, randomString } from '@/lib/auth/utils';
 import { prisma } from '@/lib/db/prisma';
@@ -62,12 +62,14 @@ export const signUp = actionClient
     
     console.log(`[SIGNUP] Creating verification token with user data for: ${normalizedEmail}`);
     // Create verification token in database with user data
-    // Using $executeRaw to bypass TypeScript checking since userData is a new field
-    // that may not be recognized by the TypeScript types yet
-    await prisma.$executeRaw`
-      INSERT INTO "VerificationToken" (identifier, token, expires, "userData")
-      VALUES (${normalizedEmail}, ${hashedOtp}, ${addHours(new Date(), EMAIL_VERIFICATION_EXPIRY_HOURS)}, ${serializedUserData})
-    `;
+    await prisma.verificationToken.create({
+      data: {
+        identifier: normalizedEmail,
+        token: hashedOtp,
+        expires: addHours(new Date(), EMAIL_VERIFICATION_EXPIRY_HOURS),
+        userData: serializedUserData
+      }
+    });
 
     // Send verification email - if this fails, the error will propagate
     // and the entire sign-up action will fail, preventing the redirect

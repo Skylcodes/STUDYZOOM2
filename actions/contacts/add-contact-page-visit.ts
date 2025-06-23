@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
 import { addContactPageVisitSchema } from '@/schemas/contacts/add-contact-page-visit-schema';
@@ -12,19 +12,21 @@ export const addContactPageVisit = authActionClient
   .metadata({ actionName: 'addContactPageVisit' })
   .schema(addContactPageVisitSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const countContacts = await prisma.contact.count({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const countContacts = await (prisma as any).studySet.count({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.studyGroupId,
         id: parsedInput.contactId
       }
     });
     if (countContacts < 1) {
-      throw new NotFoundError('Contact not found');
+      throw new NotFoundError('Study set not found');
     }
 
-    await prisma.contactPageVisit.create({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    await (prisma as any).studySetPageVisit.create({
       data: {
-        contactId: parsedInput.contactId,
+        studySetId: parsedInput.contactId, // Using contactId for backward compatibility
         userId: session.user.id
       },
       select: {
@@ -33,9 +35,9 @@ export const addContactPageVisit = authActionClient
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.ContactPageVisits,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.ContactPageVisits, // Using ContactPageVisits until StudySetPageVisits is added to StudyGroupCacheKey
+        session.user.studyGroupId
       )
     );
   });

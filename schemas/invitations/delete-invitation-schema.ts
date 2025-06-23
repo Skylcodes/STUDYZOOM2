@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const deleteInvitationSchema = z.object({
+export const deleteStudyGroupInviteSchema = z.object({
   id: z
     .string({
       required_error: 'Id is required.',
@@ -12,4 +12,8 @@ export const deleteInvitationSchema = z.object({
     .max(36, 'Maximum 36 characters allowed.')
 });
 
-export type DeleteInvitationSchema = z.infer<typeof deleteInvitationSchema>;
+export type DeleteStudyGroupInviteSchema = z.infer<typeof deleteStudyGroupInviteSchema>;
+
+// For backward compatibility during refactoring
+export const deleteInvitationSchema = deleteStudyGroupInviteSchema;
+export type DeleteInvitationSchema = DeleteStudyGroupInviteSchema;

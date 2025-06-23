@@ -1,17 +1,14 @@
 import * as React from 'react';
-import Deel from 'public/marketing/logos/deel.svg';
-import Notion from 'public/marketing/logos/notion.svg';
-import Resend from 'public/marketing/logos/resend.svg';
-import Vercel from 'public/marketing/logos/vercel.svg';
+import Image from 'next/image';
 
 import { BlurFade } from '@/components/marketing/fragments/blur-fade';
 import { GridSection } from '@/components/marketing/fragments/grid-section';
 
 const DATA = [
-  { icon: Vercel },
-  { icon: Deel },
-  { icon: Resend },
-  { icon: Notion }
+  { icon: '/marketing/logos/vercel.svg', alt: 'Vercel' },
+  { icon: '/marketing/logos/deel.svg', alt: 'Deel' },
+  { icon: '/marketing/logos/resend.svg', alt: 'Resend' },
+  { icon: '/marketing/logos/notion.svg', alt: 'Notion' }
 ];
 
 export function Logos(): React.JSX.Element {
@@ -24,13 +21,21 @@ export function Logos(): React.JSX.Element {
           </p>
         </BlurFade>
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4 lg:max-w-4xl lg:gap-10">
-          {DATA.map(({ icon: Icon }, index) => (
+          {DATA.map(({ icon, alt }, index) => (
             <BlurFade
               key={index}
               delay={0.2 + index * 0.2}
               className="flex items-center justify-center text-neutral-700 dark:text-neutral-300"
             >
-              <Icon className="h-6 w-auto" />
+              <div className="relative h-6 w-auto">
+                <Image 
+                  src={icon} 
+                  alt={alt}
+                  width={24}
+                  height={24}
+                  className="h-6 w-auto"
+                />
+              </div>
             </BlurFade>
           ))}
         </div>

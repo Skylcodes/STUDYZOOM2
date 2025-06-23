@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { FileUploadAction } from '@/types/file-upload-action';
 
+// Schema for updating study set images (formerly contact images)
 export const updateContactImageSchema = z.object({
   id: z
     .string({
@@ -25,3 +26,7 @@ export const updateContactImageSchema = z.object({
 });
 
 export type UpdateContactImageSchema = z.infer<typeof updateContactImageSchema>;
+
+// For backward compatibility during refactoring
+export const updateStudySetImageSchema = updateContactImageSchema;
+export type UpdateStudySetImageSchema = UpdateContactImageSchema;

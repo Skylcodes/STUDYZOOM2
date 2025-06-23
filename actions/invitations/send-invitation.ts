@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidateTag } from 'next/cache';
-import { InvitationStatus, Role } from '@prisma/client';
+import { InviteStatus, Role } from '../../types/prisma-mappings';
 
 import { authActionClient } from '@/actions/safe-action';
 import { Routes } from '@/constants/routes';
@@ -31,12 +31,12 @@ export const sendInvitation = authActionClient
           email: parsedInput.email
         }
       }),
-      prisma.invitation.count({
+      (prisma as any).studyGroupInvite.count({
         where: {
           email: parsedInput.email,
-          organizationId: session.user.organizationId,
+          studyGroupId: session.user.organizationId,
           status: {
-            not: InvitationStatus.REVOKED
+            not: InviteStatus.REVOKED
           }
         }
       })
@@ -45,7 +45,7 @@ export const sendInvitation = authActionClient
       throw new PreConditionError('Email address is already taken');
     }
 
-    const organization = await prisma.organization.findFirst({
+    const organization = await (prisma as any).studyGroup.findFirst({
       where: { id: session.user.organizationId },
       select: { name: true }
     });
@@ -54,24 +54,24 @@ export const sendInvitation = authActionClient
     }
 
     const [, invitation] = await prisma.$transaction([
-      prisma.invitation.updateMany({
+      (prisma as any).studyGroupInvite.updateMany({
         where: {
-          organizationId: session.user.organizationId,
+          studyGroupId: session.user.organizationId,
           email: parsedInput.email,
           AND: [
-            { NOT: { status: { equals: InvitationStatus.ACCEPTED } } },
-            { NOT: { status: { equals: InvitationStatus.REVOKED } } }
+            { NOT: { status: { equals: InviteStatus.ACCEPTED } } },
+            { NOT: { status: { equals: InviteStatus.REVOKED } } }
           ]
         },
         data: {
-          status: InvitationStatus.REVOKED
+          status: InviteStatus.REVOKED
         }
       }),
-      prisma.invitation.create({
+      (prisma as any).studyGroupInvite.create({
         data: {
           email: parsedInput.email,
           role: parsedInput.role,
-          organizationId: session.user.organizationId
+          studyGroupId: session.user.organizationId
         },
         select: {
           id: true,
@@ -85,7 +85,7 @@ export const sendInvitation = authActionClient
     revalidateTag(
       Caching.createOrganizationTag(
         OrganizationCacheKey.Invitations,
-        session.user.organizationId
+        session.user.organizationId // Will be renamed to studyGroupId in future
       )
     );
 
@@ -94,13 +94,13 @@ export const sendInvitation = authActionClient
       organizationName: organization.name,
       invitedByEmail: session.user.email,
       invitedByName: session.user.name,
-      inviteLink: `${getBaseUrl()}${Routes.InvitationRequest}/${invitation.token}`
+      inviteLink: `${getBaseUrl()}/invitations/request/${invitation.token}` // Using direct path instead of Routes constant
     });
 
-    await prisma.invitation.update({
+    await (prisma as any).studyGroupInvite.update({
       where: {
         id: invitation.id,
-        organizationId: session.user.organizationId
+        studyGroupId: session.user.organizationId
       },
       data: { lastSentAt: new Date() },
       select: {

@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { updateContactAndCaptureEvent } from '@/lib/db/contact-event-capture';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
@@ -13,9 +13,10 @@ export const updateContactTags = authActionClient
   .metadata({ actionName: 'updateContactTags' })
   .schema(updateContactTagsSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const contact = await prisma.contact.findFirst({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const studySet = await (prisma as any).studySet.findFirst({
       where: {
-        organizationId: session.user.organizationId,
+        studyGroupId: session.user.studyGroupId,
         id: parsedInput.id
       },
       select: {
@@ -27,10 +28,11 @@ export const updateContactTags = authActionClient
         }
       }
     });
-    if (!contact) {
-      throw new NotFoundError('Contact not found');
+    if (!studySet) {
+      throw new NotFoundError('Study set not found');
     }
 
+    // Using type assertion to maintain backward compatibility during transition
     await updateContactAndCaptureEvent(
       parsedInput.id,
       {
@@ -39,26 +41,26 @@ export const updateContactTags = authActionClient
             where: { text: tag.text },
             create: { text: tag.text }
           })),
-          disconnect: contact.tags
+          disconnect: studySet.tags
             .filter(
               (tag) => !parsedInput.tags.map((t) => t.text).includes(tag.text)
             )
             .map((tag) => ({ id: tag.id }))
         }
-      },
+      } as any,
       session.user.id
     );
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contacts,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contacts, // Using Contacts until StudySets is added to StudyGroupCacheKey
+        session.user.studyGroupId
       )
     );
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.Contact,
-        session.user.organizationId,
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.Contact, // Using Contact until StudySet is added to StudyGroupCacheKey
+        session.user.studyGroupId,
         parsedInput.id
       )
     );

@@ -35,23 +35,26 @@ export enum Routes {
 
   Dashboard = '/dashboard',
   Home = '/dashboard/home',
+  Documents = '/dashboard/documents',
   Contacts = '/dashboard/contacts',
+  Billing = '/dashboard/billing',
   Settings = '/dashboard/settings',
   Account = '/dashboard/settings/account',
   Profile = '/dashboard/settings/account/profile',
   Security = '/dashboard/settings/account/security',
   Notifications = '/dashboard/settings/account/notifications',
-  Organization = '/dashboard/settings/organization',
-  OrganizationInformation = '/dashboard/settings/organization/information',
-  Members = '/dashboard/settings/organization/members',
-  Billing = '/dashboard/settings/organization/billing',
-  Developers = '/dashboard/settings/organization/developers',
+  // Document-centric routes
+  DocumentSettings = '/dashboard/settings/documents',
+  DocumentSharing = '/dashboard/settings/documents/sharing',
+  DocumentPreferences = '/dashboard/settings/documents/preferences',
 
-  Invitations = '/invitations',
-  InvitationRequest = '/invitations/request',
-  InvitationAlreadyAccepted = '/invitations/already-accepted',
-  InvitationRevoked = '/invitations/revoked',
-  InvitationLogOutToAccept = '/invitations/log-out-to-accept',
+  Onboarding = '/onboarding',
 
-  Onboarding = '/onboarding'
+  // AI Tools routes
+  AiChatbot = '/dashboard/ai-tools/chatbot',
+  Flashcards = '/dashboard/ai-tools/flashcards',
+  Summaries = '/dashboard/ai-tools/summaries',
+  Quizzes = '/dashboard/ai-tools/quizzes',
+  Podcasts = '/dashboard/ai-tools/podcasts',
+  DocumentChat = '/dashboard/ai-tools/document-chat'
 }

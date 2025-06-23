@@ -6,7 +6,7 @@ import { isAfter } from 'date-fns';
 import { actionClient } from '@/actions/safe-action';
 import { Routes } from '@/constants/routes';
 import { signIn } from '@/lib/auth';
-import { createUserWithOrganization } from '@/lib/auth/organization';
+import { createUser } from '@/lib/auth/user-creation';
 import { cleanupVerificationRecords } from '@/lib/auth/verification';
 import { prisma } from '@/lib/db/prisma';
 import { sendWelcomeEmail } from '@/lib/smtp/send-welcome-email';
@@ -19,21 +19,16 @@ export const verifyEmailWithToken = actionClient
   .action(async ({ parsedInput }) => {
     console.log(`[VERIFY_EMAIL] Processing verification token: ${parsedInput.token}`);
     
-    // Find the verification token
-    // Note: Using raw query to access userData field which may not be recognized by TypeScript
-    // but exists in the database schema after our migration
-    const verificationTokens = await prisma.$queryRaw<Array<{
-      identifier: string;
-      token: string;
-      expires: Date;
-      userData: string | null;
-    }>>`
-      SELECT identifier, token, expires, "userData"
-      FROM "VerificationToken"
-      WHERE token = ${parsedInput.token}
-    `;
-    
-    const verificationToken = verificationTokens[0];
+    // Find the verification token using Prisma's typed API
+    const verificationToken = await prisma.verificationToken.findUnique({
+      where: { token: parsedInput.token },
+      select: {
+        identifier: true,
+        token: true,
+        expires: true,
+        userData: true
+      }
+    });
     
     if (!verificationToken) {
       console.error(`[VERIFY_EMAIL] Verification token not found: ${parsedInput.token}`);
@@ -78,8 +73,8 @@ export const verifyEmailWithToken = actionClient
         console.log(`[VERIFY_EMAIL] Creating user from stored data for: ${verificationToken.identifier}`);
         const userData = JSON.parse(verificationToken.userData);
         
-        // Create user with organization
-        const user = await createUserWithOrganization({
+        // Create user
+        const user = await createUser({
           name: userData.name,
           email: userData.email,
           hashedPassword: userData.hashedPassword,
@@ -138,24 +133,8 @@ export const verifyEmailWithToken = actionClient
       });
     }
     
-    // Sign in the user automatically
-    try {
-      console.log(`[VERIFY_EMAIL] Signing in verified user: ${userEmail}`);
-      const signInResult = await signIn('credentials', {
-        redirect: false,
-        email: verificationToken.identifier,
-        password: '' // We can't know the password here, but we're bypassing normal auth flow
-      });
-      
-      if (signInResult?.error) {
-        console.warn(`[VERIFY_EMAIL] Auto sign-in failed: ${signInResult.error}`);
-        // Continue to success page even if auto-login fails
-      }
-    } catch (error) {
-      console.error(`[VERIFY_EMAIL] Error during auto sign-in: ${error}`);
-      // Continue to success page even if auto-login fails
-    }
-    
-    console.log(`[VERIFY_EMAIL] Verification complete, redirecting to success page`);
-    return redirect(Routes.VerifyEmailSuccess);
+    // Instead of auto-signin which would fail without password,
+    // redirect to login page with success message
+    console.log(`[VERIFY_EMAIL] Email verification successful for: ${userEmail}`);
+    return redirect(`${Routes.Login}?verified=true&email=${encodeURIComponent(verificationToken.identifier)}`);
   });

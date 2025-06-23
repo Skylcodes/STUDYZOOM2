@@ -1,4 +1,4 @@
-import { DayOfWeek } from '@prisma/client';
+import { DayOfWeek } from '../../types/prisma-mappings';
 import {
   compareAsc,
   format,
@@ -11,14 +11,18 @@ import {
 } from 'date-fns';
 import { z } from 'zod';
 
+// These will be renamed to StudyScheduleDto and StudyTimeSlotDto in future
 import { WorkHoursDto } from '@/types/dtos/work-hours-dto';
 import { WorkTimeSlotDto } from '@/types/dtos/work-time-slot-dto';
 
-export const updateBusinessHoursSchema = z.object({
-  businessHours: z
+// Schema for updating study group schedule (formerly business hours)
+export const updateStudyGroupScheduleSchema = z.object({
+  businessHours: z // Will be renamed to schedule in future
     .array(
       z.object({
-        dayOfWeek: z.nativeEnum(DayOfWeek),
+        dayOfWeek: z.nativeEnum(DayOfWeek, {
+          required_error: 'Day of week is required'
+        }),
         timeSlots: z.array(
           z.object({
             id: z
@@ -66,19 +70,23 @@ export const updateBusinessHoursSchema = z.object({
         )
       })
     )
-    .refine((workHours) => areWorkHoursValid(workHours))
+    .refine((workHours) => areWorkHoursValid(workHours as WorkHoursDto[]))
 });
 
-export type UpdateBusinessHoursSchema = z.infer<
-  typeof updateBusinessHoursSchema
+export type UpdateStudyGroupScheduleSchema = z.infer<
+  typeof updateStudyGroupScheduleSchema
 >;
+
+// For backward compatibility during refactoring
+export const updateBusinessHoursSchema = updateStudyGroupScheduleSchema;
+export type UpdateBusinessHoursSchema = UpdateStudyGroupScheduleSchema;
 
 export function isEndGreaterThanStart(timeSlot: WorkTimeSlotDto): boolean {
   const normalized = normalizedTimeSlot(timeSlot);
   return isAfter(parseISO(normalized.end), parseISO(normalized.start));
 }
 
-export function isEveryEndGreaterThanStart(workHours: WorkHoursDto[]): boolean {
+export function isEveryEndGreaterThanStart(workHours: WorkHoursDto[] | any[]): boolean {
   for (const w of workHours) {
     if (w.timeSlots && w.timeSlots.length > 0) {
       for (const timeSlot of w.timeSlots) {
@@ -147,7 +155,7 @@ export function getOverlappingTimeSlotsIds(
   return [...new Set(overlappingTimeSlots)];
 }
 
-export function areThereNoOverlaps(workHours: WorkHoursDto[]): boolean {
+export function areThereNoOverlaps(workHours: WorkHoursDto[] | any[]): boolean {
   for (const w of workHours) {
     if (w.timeSlots && w.timeSlots.length > 1) {
       const normalizedTimeSlots = normalizeTimeSlots(w.timeSlots);
@@ -171,7 +179,7 @@ export function areThereNoOverlaps(workHours: WorkHoursDto[]): boolean {
   return true;
 }
 
-export function noDuplicateDayOfWeek(workHours: WorkHoursDto[]): boolean {
+export function noDuplicateDayOfWeek(workHours: WorkHoursDto[] | any[]): boolean {
   const seen = new Set<DayOfWeek>();
   for (const w of workHours) {
     const key = w.dayOfWeek.toUpperCase() as DayOfWeek;
@@ -184,7 +192,7 @@ export function noDuplicateDayOfWeek(workHours: WorkHoursDto[]): boolean {
   return seen.size === 7;
 }
 
-export function areWorkHoursValid(workHours: WorkHoursDto[]): boolean {
+export function areWorkHoursValid(workHours: WorkHoursDto[] | any[]): boolean {
   return (
     noDuplicateDayOfWeek(workHours) &&
     isEveryEndGreaterThanStart(workHours) &&

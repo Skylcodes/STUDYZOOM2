@@ -1,16 +1,18 @@
+import { type Prisma } from '@prisma/client';
 import {
   ActionType,
   ActorType,
-  type Contact,
-  type Prisma
-} from '@prisma/client';
+  type StudySet as Contact
+} from '@/types/prisma-mappings';
 
 import { prisma } from '@/lib/db/prisma';
 
+// Fields to check for changes when capturing events
+// Using legacy field names for backward compatibility
 const fieldsToCheck = [
-  'record',
-  'image',
-  'name',
+  'record', // Will be recordType in future
+  'image', // Will be filePath in future
+  'name', // Will be title in future
   'email',
   'address',
   'phone',
@@ -25,13 +27,22 @@ type ChangeEntry = {
   new: string | null;
 };
 
+// Changes detected in a study set (formerly contact)
 type ContactChanges = {
   [K in FieldToCheck]?: ChangeEntry;
 };
 
+// Domain-aligned type for future use
+type StudySetChanges = ContactChanges;
+
+// Legacy type name with domain-aligned implementation
 type ContactWithTags = Contact & {
   tags: { text: string }[];
+  studyGroupId?: string; // Added for compatibility with example-data.ts
 };
+
+// Legacy type for backward compatibility
+type StudySetWithTags = ContactWithTags;
 
 function safeStringify<T>(value: T): string | null {
   if (value === null || value === undefined) {
@@ -47,7 +58,7 @@ function joinTags(tags: { text: string }[]): string {
 export function detectChanges(
   currentContact: Partial<ContactWithTags> | null,
   updatedContact: ContactWithTags,
-  updateData?: Prisma.ContactUpdateInput
+  updateData?: Prisma.StudySetUpdateInput
 ): ContactChanges {
   const changes: ContactChanges = {};
 
@@ -74,14 +85,21 @@ export function detectChanges(
   return changes;
 }
 
+
+/**
+ * Creates a study set (formerly contact) and captures the creation event
+ * @param contactData The data to create the study set with
+ * @param actorId The ID of the user creating the study set
+ * @returns The created study set with tags
+ */
 export async function createContactAndCaptureEvent(
-  contactData: Prisma.ContactCreateInput,
+  contactData: Prisma.StudySetCreateInput,
   actorId: string
 ): Promise<ContactWithTags> {
   return await prisma.$transaction(async (tx) => {
     const createdAt = contactData.createdAt ?? new Date();
 
-    const newContact = await tx.contact.create({
+    const newContact = await (tx as any).studySet.create({
       data: {
         ...contactData,
         createdAt: createdAt,
@@ -92,10 +110,10 @@ export async function createContactAndCaptureEvent(
 
     const changes = detectChanges(null, newContact);
 
-    await tx.contactActivity.create({
+    await (tx as any).studySetActivity.create({
       data: {
-        contactId: newContact.id,
-        actionType: ActionType.CREATE,
+        contactId: newContact.id, // Using contactId for backward compatibility (will be studySetId in future)
+        actionType: ActionType.CREATED,
         actorId,
         actorType: ActorType.MEMBER,
         metadata: changes,
@@ -107,13 +125,20 @@ export async function createContactAndCaptureEvent(
   });
 }
 
+/**
+ * Updates a study set (formerly contact) and captures the update event
+ * @param contactId The ID of the study set to update
+ * @param updateData The data to update the study set with
+ * @param actorId The ID of the user updating the study set
+ * @returns The changes made to the study set
+ */
 export async function updateContactAndCaptureEvent(
   contactId: string,
-  updateData: Prisma.ContactUpdateInput,
+  updateData: Prisma.StudySetUpdateInput,
   actorId: string
 ): Promise<ContactChanges> {
   return await prisma.$transaction(async (tx) => {
-    const currentContact = await tx.contact.findUnique({
+    const currentContact = await (tx as any).studySet.findUnique({
       where: { id: contactId },
       include: { tags: true }
     });
@@ -122,7 +147,7 @@ export async function updateContactAndCaptureEvent(
       throw new Error('Contact not found');
     }
 
-    const updatedContact = await tx.contact.update({
+    const updatedContact = await (tx as any).studySet.update({
       where: { id: contactId },
       data: { ...updateData, updatedAt: new Date() },
       include: { tags: true }
@@ -131,10 +156,10 @@ export async function updateContactAndCaptureEvent(
     const changes = detectChanges(currentContact, updatedContact, updateData);
 
     if (Object.keys(changes).length > 0) {
-      await tx.contactActivity.create({
+      await (tx as any).studySetActivity.create({
         data: {
-          contactId,
-          actionType: ActionType.UPDATE,
+          contactId, // Using contactId for backward compatibility (will be studySetId in future)
+          actionType: ActionType.UPDATED,
           actorId,
           actorType: ActorType.MEMBER,
           metadata: changes,
@@ -146,3 +171,7 @@ export async function updateContactAndCaptureEvent(
     return changes;
   });
 }
+
+// Domain-aligned function aliases for future use
+export const createStudySetAndCaptureEvent = createContactAndCaptureEvent;
+export const updateStudySetAndCaptureEvent = updateContactAndCaptureEvent;

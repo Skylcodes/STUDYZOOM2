@@ -8,6 +8,7 @@ import { Providers } from '@/app/providers';
 import { Toaster } from '@/components/ui/sonner';
 import { AppInfo } from '@/constants/app-info';
 import { getBaseUrl } from '@/lib/urls/get-base-url';
+import ErrorBoundaryLayout from '@/components/layouts/error-boundary-layout';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -49,7 +50,9 @@ export default async function RootLayout({
       <body className={`${inter.className} min-h-screen w-full cosmic-background overflow-x-hidden`}>
         <main className="relative z-[1] w-full min-h-screen">
           <Providers>
-            {children}
+            <ErrorBoundaryLayout>
+              {children}
+            </ErrorBoundaryLayout>
             <React.Suspense>
               <Toaster />
             </React.Suspense>

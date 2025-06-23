@@ -1,15 +1,20 @@
 import * as React from 'react';
 
-import { searchParamsCache } from '@/components/dashboard/home/home-search-params';
-import { LeadGenerationCard } from '@/components/dashboard/home/lead-generation-card';
-import { getLeadGenerationData } from '@/data/home/get-lead-generation-data';
-import type { NextPageProps } from '@/types/next-page-props';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export default async function LeadGenerationPage({
-  searchParams
-}: NextPageProps): Promise<React.JSX.Element> {
-  const parsedSearchParams = await searchParamsCache.parse(searchParams);
-  const data = await getLeadGenerationData(parsedSearchParams);
-
-  return <LeadGenerationCard data={data} />;
+// Placeholder component for document statistics
+// This will be implemented as part of the document-centric model
+export default function DocumentStatisticsPage(): React.JSX.Element {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Document Statistics</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          Your document statistics and analytics will appear here.
+        </p>
+      </CardContent>
+    </Card>
+  );
 }

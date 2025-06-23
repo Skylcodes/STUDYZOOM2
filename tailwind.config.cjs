@@ -18,6 +18,9 @@ module.exports = {
     },
     extend: {
       colors: {
+        'surface-1': 'hsl(var(--surface-1))',
+        'surface-2': 'hsl(var(--surface-2))',
+        'surface-3': 'hsl(var(--surface-3))',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -63,6 +66,7 @@ module.exports = {
         }
       },
       backgroundImage: {
+        'dashboard-gradient': 'radial-gradient(120% 120% at 50% -20%, hsl(var(--primary) / 0.10) 0%, hsl(var(--background)) 60%), linear-gradient(180deg, #020617 0%, #0f172a 100%)',
         'diagonal-lines':
           'repeating-linear-gradient(-45deg, hsl(var(--background)), hsl(var(--border)) 1px, hsl(var(--background)) 1px, hsl(var(--background)) 8px)',
         'gradient-primary': 'var(--gradient-primary)',
@@ -233,6 +237,7 @@ module.exports = {
         rotate: 'rotate 20s linear infinite'
       },
       boxShadow: {
+        'primary-glow': '0 0 12px hsl(var(--primary) / 0.35)',
         glow: '0 0 20px rgba(79, 70, 229, 0.5)',
         'glow-lg': '0 0 30px rgba(79, 70, 229, 0.6)',
         'inner-glow': 'inset 0 0 15px rgba(79, 70, 229, 0.4)'

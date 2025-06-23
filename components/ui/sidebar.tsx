@@ -552,18 +552,19 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 export const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2.5 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-9 group-data-[collapsible=icon]:!p-2.5 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-xl p-2.5 text-left text-sm outline-none transition-all duration-200 hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-[#4B7BF5]/50 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-gradient-to-r data-[active=true]:from-[#4B7BF5]/10 data-[active=true]:to-[#9181F2]/10 data-[active=true]:font-medium data-[active=true]:text-white data-[active=true]:hover:from-[#4B7BF5]/15 data-[active=true]:hover:to-[#9181F2]/15 data-[state=open]:hover:bg-white/5 group-data-[collapsible=icon]:!size-10 group-data-[collapsible=icon]:!p-2.5 [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-        outline:
-          'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]'
+        default: 'hover:bg-white/5 hover:text-white',
+        outline: 'bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/5 hover:text-white',
+        ghost: 'hover:bg-white/5 hover:text-white',
       },
       size: {
-        default: 'h-9 text-sm',
-        sm: 'h-8 text-xs',
-        lg: 'h-12 text-sm group-data-[collapsible=icon]:!p-0'
+        default: 'h-11 text-sm',
+        sm: 'h-9 text-xs',
+        lg: 'h-12 text-sm group-data-[collapsible=icon]:!p-0',
+        xl: 'h-14 text-base group-data-[collapsible=icon]:!p-0',
       }
     },
     defaultVariants: {
@@ -574,11 +575,12 @@ export const sidebarMenuButtonVariants = cva(
 );
 
 export type SidebarMenuButtonElement = HTMLButtonElement;
-export type SidebarMenuButtonProps = React.ComponentProps<'button'> & {
-  asChild?: boolean;
-  isActive?: boolean;
-  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-} & VariantProps<typeof sidebarMenuButtonVariants>;
+export type SidebarMenuButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
+  VariantProps<typeof sidebarMenuButtonVariants> & {
+    asChild?: boolean;
+    isActive?: boolean;
+    tooltipContent?: string;
+  };
 const SidebarMenuButton = React.forwardRef<
   SidebarMenuButtonElement,
   SidebarMenuButtonProps
@@ -589,7 +591,7 @@ const SidebarMenuButton = React.forwardRef<
       isActive = false,
       variant = 'default',
       size = 'default',
-      tooltip,
+      tooltipContent,
       className,
       ...props
     },
@@ -609,15 +611,11 @@ const SidebarMenuButton = React.forwardRef<
       />
     );
 
-    if (!tooltip) {
+    if (!tooltipContent) {
       return button;
     }
 
-    if (typeof tooltip === 'string') {
-      tooltip = {
-        children: tooltip
-      };
-    }
+    const tooltipProps = { children: tooltipContent };
 
     return (
       <Tooltip>
@@ -626,7 +624,7 @@ const SidebarMenuButton = React.forwardRef<
           side="right"
           align="center"
           hidden={state !== 'collapsed' || isMobile}
-          {...tooltip}
+          {...tooltipProps}
         />
       </Tooltip>
     );

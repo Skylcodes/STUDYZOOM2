@@ -1,14 +1,16 @@
 import {
   BellIcon,
-  CodeIcon,
-  CreditCardIcon,
+  BookOpenIcon,
+  BrainIcon,
+  FileIcon,
+  FlaskConicalIcon,
   HomeIcon,
   LockKeyholeIcon,
+  MessageSquareIcon,
+  MicIcon,
   SettingsIcon,
-  StoreIcon,
-  UserIcon,
-  UserPlus2Icon,
-  UsersIcon
+  StickyNoteIcon,
+  UserIcon
 } from 'lucide-react';
 
 import { Routes } from '@/constants/routes';
@@ -21,14 +23,47 @@ export const mainNavItems: NavItem[] = [
     icon: HomeIcon
   },
   {
-    title: 'Contacts',
-    href: Routes.Contacts,
-    icon: UsersIcon
+    title: 'Documents',
+    href: Routes.Documents, // Updated to use the Documents route
+    icon: FileIcon
   },
   {
     title: 'Settings',
     href: Routes.Settings,
     icon: SettingsIcon
+  }
+];
+
+export const aiToolsNavItems: NavItem[] = [
+  {
+    title: 'AI Study Buddy',
+    href: Routes.AiChatbot,
+    icon: BrainIcon
+  },
+  {
+    title: 'Flashcards',
+    href: Routes.Flashcards,
+    icon: StickyNoteIcon
+  },
+  {
+    title: 'Summaries',
+    href: Routes.Summaries,
+    icon: BookOpenIcon
+  },
+  {
+    title: 'Quizzes',
+    href: Routes.Quizzes,
+    icon: FlaskConicalIcon
+  },
+  {
+    title: 'Podcasts',
+    href: Routes.Podcasts,
+    icon: MicIcon
+  },
+  {
+    title: 'Document Chat',
+    href: Routes.DocumentChat,
+    icon: MessageSquareIcon
   }
 ];
 
@@ -50,25 +85,4 @@ export const accountNavItems: NavItem[] = [
   }
 ];
 
-export const organizationNavItems: NavItem[] = [
-  {
-    title: 'Information',
-    href: Routes.OrganizationInformation,
-    icon: StoreIcon
-  },
-  {
-    title: 'Members',
-    href: Routes.Members,
-    icon: UserPlus2Icon
-  },
-  {
-    title: 'Billing',
-    href: Routes.Billing,
-    icon: CreditCardIcon
-  },
-  {
-    title: 'Developers',
-    href: Routes.Developers,
-    icon: CodeIcon
-  }
-];
+// Organization navigation items removed as part of pivot to document-centric model

@@ -1,11 +1,9 @@
-import { ContactTaskStatus } from '@prisma/client';
+import { type ActionItem, type ActionItemStatus } from '../prisma-mappings';
 
-export type ContactTaskDto = {
-  id: string;
-  contactId?: string;
-  title: string;
-  description?: string;
-  status: ContactTaskStatus;
-  dueDate?: Date;
-  createdAt: Date;
+export type ActionItemDto = ActionItem & {
+  contactId?: string; // Legacy field for backward compatibility (maps to studySetId)
+  status: ActionItemStatus;
 };
+
+// Backward compatibility export
+export type ContactTaskDto = ActionItemDto;

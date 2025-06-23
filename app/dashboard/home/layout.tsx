@@ -8,6 +8,7 @@ import { HomeFilters } from '@/components/dashboard/home/home-filters';
 import { HomeSpinner } from '@/components/dashboard/home/home-spinner';
 import { XIcon } from '@/components/ui/brand-icons';
 import { buttonVariants } from '@/components/ui/button';
+import { ModernDashboard } from '@/components/dashboard/modern-dashboard';
 import {
   Page,
   PageActions,
@@ -23,36 +24,35 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 import { TransitionProvider } from '@/hooks/use-transition-context';
-import { createTitle } from '@/lib/utils';
+import { cn, createTitle } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: createTitle('Home')
 };
 
-export type HomeLayoutProps = {
-  leadGeneration: React.ReactNode;
-  mostVisitedContacts: React.ReactNode;
-  leastVisitedContacts: React.ReactNode;
-};
+// We no longer need props for the home layout as we're using the ModernDashboard component
+export type HomeLayoutProps = Record<string, never>;
 
-export default function HomeLayout({
-  leadGeneration,
-  mostVisitedContacts,
-  leastVisitedContacts
-}: HomeLayoutProps): React.JSX.Element {
+export default function HomeLayout(): React.JSX.Element {
   return (
     <TransitionProvider>
-      <Page>
-        <PageHeader>
+      <Page className="bg-gradient-background dark:bg-gradient-to-b dark:from-background dark:to-background/95 relative">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          <div className="absolute -top-[40%] -right-[10%] w-[70%] h-[70%] bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-[30%] -left-[10%] w-[50%] h-[50%] bg-accent/5 rounded-full blur-3xl" />
+        </div>
+        
+        <PageHeader className="relative z-10">
           <PagePrimaryBar>
             <div className="flex flex-row items-center gap-1">
-              <PageTitle>Overview</PageTitle>
+              <PageTitle>Dashboard</PageTitle>
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <InfoIcon className="hidden size-3 shrink-0 text-muted-foreground sm:inline" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  Lead and contact engagement metrics
+                  Your study materials and analytics
                 </TooltipContent>
               </Tooltip>
             </div>
@@ -79,14 +79,8 @@ export default function HomeLayout({
             <HomeFilters />
           </PageSecondaryBar>
         </PageHeader>
-        <PageBody>
-          <div className="mx-auto max-w-6xl space-y-2 p-2 sm:space-y-8 sm:p-6">
-            {leadGeneration}
-            <div className="grid grid-cols-1 gap-2 sm:gap-8 md:grid-cols-2">
-              {mostVisitedContacts}
-              {leastVisitedContacts}
-            </div>
-          </div>
+        <PageBody className="relative z-10">
+          <ModernDashboard />
           <HomeSpinner />
         </PageBody>
       </Page>

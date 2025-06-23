@@ -14,8 +14,8 @@ export const metadata: Metadata = {
 };
 
 export default async function OnboardingPage(): Promise<React.JSX.Element> {
-  const { user, organization } = await getOnboardingData();
-  if (user.completedOnboarding && organization.completedOnboarding) {
+  const { user } = await getOnboardingData();
+  if (user.completedOnboarding) {
     return redirect(Routes.Home);
   }
   return (
@@ -23,7 +23,6 @@ export default async function OnboardingPage(): Promise<React.JSX.Element> {
       <LogOutButton className="fixed bottom-2 left-2 hidden sm:flex" />
       <OnboardingWizard
         user={user}
-        organization={organization}
       />
       <ThemeToggle className="fixed bottom-2 right-2 rounded-full" />
     </div>

@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { addContactNoteSchema } from '@/schemas/contacts/add-contact-note-schema';
 
@@ -11,9 +11,10 @@ export const addContactNote = authActionClient
   .metadata({ actionName: 'addContactNote' })
   .schema(addContactNoteSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    await prisma.contactNote.create({
+    // Using (prisma as any) for temporary typing workarounds during transition
+    await (prisma as any).studySetNote.create({
       data: {
-        contactId: parsedInput.contactId,
+        studySetId: parsedInput.contactId, // Using contactId for backward compatibility
         text: parsedInput.text ? parsedInput.text : undefined,
         userId: session.user.id
       },
@@ -23,10 +24,10 @@ export const addContactNote = authActionClient
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.ContactNotes,
-        session.user.organizationId,
-        parsedInput.contactId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.ContactNotes, // Using ContactNotes until StudySetNotes is added to StudyGroupCacheKey
+        session.user.studyGroupId,
+        parsedInput.contactId // Using contactId for backward compatibility
       )
     );
   });

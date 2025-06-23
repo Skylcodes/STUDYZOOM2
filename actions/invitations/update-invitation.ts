@@ -1,23 +1,25 @@
 'use server';
 
 import { revalidateTag } from 'next/cache';
-import { Role } from '@prisma/client';
+import { Role } from '../../types/prisma-mappings';
+import { Prisma } from '@prisma/client';
 
 import { authActionClient } from '@/actions/safe-action';
 import { Caching, OrganizationCacheKey } from '@/data/caching';
 import { isAdmin } from '@/lib/auth/permissions';
 import { prisma } from '@/lib/db/prisma';
 import { ForbiddenError, NotFoundError } from '@/lib/validation/exceptions';
-import { updateInvitationSchema } from '@/schemas/invitations/update-invitation-schema';
+import { updateInvitationSchema } from '@/schemas/invitations/update-invitation-schema'; // Will be renamed to update-study-group-invite-schema
 
-export const updateInvitation = authActionClient
-  .metadata({ actionName: 'updateInvitation' })
+export const updateStudyGroupInvite = authActionClient
+  .metadata({ actionName: 'updateStudyGroupInvite' })
   .schema(updateInvitationSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const invitation = await prisma.invitation.findFirst({
+    // Using the new model name from our schema with type assertion
+    const invitation = await (prisma as any).studyGroupInvite.findFirst({
       where: {
         id: parsedInput.id,
-        organizationId: session.user.organizationId
+        studyGroupId: session.user.organizationId
       },
       select: {
         email: true,
@@ -35,7 +37,8 @@ export const updateInvitation = authActionClient
       throw new ForbiddenError('Insufficient permissions');
     }
 
-    await prisma.invitation.update({
+    // Using the new model name from our schema with type assertion
+    await (prisma as any).studyGroupInvite.update({
       where: { id: parsedInput.id },
       data: { role: parsedInput.role },
       select: {
@@ -46,7 +49,10 @@ export const updateInvitation = authActionClient
     revalidateTag(
       Caching.createOrganizationTag(
         OrganizationCacheKey.Invitations,
-        session.user.organizationId
+        session.user.organizationId // Will be renamed to studyGroupId in future
       )
     );
   });
+
+// For backward compatibility during refactoring
+export const updateInvitation = updateStudyGroupInvite;

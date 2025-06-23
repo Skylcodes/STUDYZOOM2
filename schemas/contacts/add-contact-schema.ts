@@ -1,8 +1,9 @@
-import { ContactRecord } from '@prisma/client';
+import { StudySetStage } from '../../types/prisma-mappings';
 import { z } from 'zod';
 
+// Schema for adding study sets (formerly contacts)
 export const addContactSchema = z.object({
-  record: z.nativeEnum(ContactRecord, {
+  record: z.nativeEnum(StudySetStage, {
     required_error: 'Record is required',
     invalid_type_error: 'Record must be a string'
   }),
@@ -34,3 +35,7 @@ export const addContactSchema = z.object({
 });
 
 export type AddContactSchema = z.infer<typeof addContactSchema>;
+
+// For backward compatibility during refactoring
+export const addStudySetSchema = addContactSchema;
+export type AddStudySetSchema = AddContactSchema;

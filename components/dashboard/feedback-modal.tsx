@@ -143,6 +143,7 @@ export const FeedbackModal = NiceModal.create<FeedbackModalProps>(() => {
       <Button
         type="button"
         variant="outline"
+        className="border-[#4B7BF5] text-[#4B7BF5] hover:bg-[#4B7BF5]/10 hover:text-[#4B7BF5]"
         onClick={modal.handleClose}
       >
         Cancel
@@ -150,6 +151,7 @@ export const FeedbackModal = NiceModal.create<FeedbackModalProps>(() => {
       <Button
         type="button"
         variant="default"
+        className="bg-gradient-to-r from-[#4B7BF5] to-[#9181F2] hover:from-[#4B7BF5]/90 hover:to-[#9181F2]/90 text-white"
         disabled={!canSubmit}
         loading={methods.formState.isSubmitting}
         onClick={methods.handleSubmit(onSubmit)}

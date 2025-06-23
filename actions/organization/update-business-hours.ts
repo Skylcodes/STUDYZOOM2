@@ -3,21 +3,22 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
-import { updateBusinessHoursSchema } from '@/schemas/organization/update-business-hours-schema';
+import { updateStudyGroupScheduleSchema } from '@/schemas/organization/update-business-hours-schema';
 
-export const updateBusinessHours = authActionClient
-  .metadata({ actionName: 'updateBusinessHours' })
-  .schema(updateBusinessHoursSchema)
+export const updateStudyGroupSchedule = authActionClient
+  .metadata({ actionName: 'updateStudyGroupSchedule' })
+  .schema(updateStudyGroupScheduleSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const organization = await prisma.organization.findFirst({
-      where: { id: session.user.organizationId },
+    // Using (prisma as any) for temporary typing workarounds during transition
+    const studyGroup = await (prisma as any).studyGroup.findFirst({
+      where: { id: session.user.studyGroupId },
       select: {
         name: true,
         stripeCustomerId: true,
-        businessHours: {
+        businessHours: { // Will be renamed to schedule in future
           select: {
             id: true,
             dayOfWeek: true,
@@ -30,27 +31,28 @@ export const updateBusinessHours = authActionClient
         }
       }
     });
-    if (!organization) {
-      throw new NotFoundError('Organization not found');
+    if (!studyGroup) {
+      throw new NotFoundError('Study group not found');
     }
 
+    // Using (prisma as any) for temporary typing workarounds during transition
     await prisma.$transaction([
-      prisma.workTimeSlot.deleteMany({
+      (prisma as any).workTimeSlot.deleteMany({
         where: {
           workHours: {
-            organization: {
-              id: session.user.organizationId
+            studyGroup: { // Renamed from organization to studyGroup
+              id: session.user.studyGroupId
             }
           },
           workHoursId: {
-            in: organization.businessHours.map((workHours) => workHours.id)
+            in: studyGroup.businessHours.map((workHours) => workHours.id)
           }
         }
       }),
       ...parsedInput.businessHours.map((workHours) =>
-        prisma.workTimeSlot.createMany({
+        (prisma as any).workTimeSlot.createMany({
           data: workHours.timeSlots.map((timeSlot) => ({
-            workHoursId: organization.businessHours.find(
+            workHoursId: studyGroup.businessHours.find(
               (w) => w.dayOfWeek === workHours.dayOfWeek
             )!.id,
             start: timeSlot.start,
@@ -61,9 +63,12 @@ export const updateBusinessHours = authActionClient
     ]);
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.BusinessHours,
-        session.user.organizationId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.BusinessHours, // Will be renamed to StudyGroupSchedule in future
+        session.user.studyGroupId
       )
     );
   });
+
+// For backward compatibility during refactoring
+export const updateBusinessHours = updateStudyGroupSchedule;

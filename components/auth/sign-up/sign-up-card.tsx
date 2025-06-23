@@ -2,9 +2,8 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { AlertCircleIcon } from 'lucide-react';
-import GoogleLogo from 'public/google-logo.svg';
-import MicrosoftLogo from 'public/microsoft-logo.svg';
 import { type SubmitHandler } from 'react-hook-form';
 
 import { continueWithGoogle } from '@/actions/auth/continue-with-google';
@@ -178,10 +177,14 @@ export function SignUpCard(props: CardProps): React.JSX.Element {
             disabled={methods.formState.isSubmitting}
             onClick={handleSignInWithGoogle}
           >
-            <GoogleLogo
-              width="20"
-              height="20"
-            />
+            <div className="relative w-5 h-5">
+              <Image 
+                src="/google-logo.svg" 
+                alt="Google logo"
+                width={20}
+                height={20}
+              />
+            </div>
             Google
           </Button>
           <Button
@@ -191,10 +194,14 @@ export function SignUpCard(props: CardProps): React.JSX.Element {
             disabled={methods.formState.isSubmitting}
             onClick={handleSignInWithMicrosoft}
           >
-            <MicrosoftLogo
-              width="20"
-              height="20"
-            />
+            <div className="relative w-5 h-5">
+              <Image 
+                src="/microsoft-logo.svg" 
+                alt="Microsoft logo"
+                width={20}
+                height={20}
+              />
+            </div>
             Microsoft
           </Button>
         </div>

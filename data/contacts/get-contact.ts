@@ -6,7 +6,8 @@ import { notFound, redirect } from 'next/navigation';
 import {
   Caching,
   defaultRevalidateTimeInSeconds,
-  OrganizationCacheKey
+  OrganizationCacheKey,
+  StudyGroupCacheKey
 } from '@/data/caching';
 import { dedupedAuth } from '@/lib/auth';
 import { getLoginRedirect } from '@/lib/auth/redirect';
@@ -18,6 +19,7 @@ import {
   type GetContactSchema
 } from '@/schemas/contacts/get-contact-schema';
 import type { ContactDto } from '@/types/dtos/contact-dto';
+// Will be renamed to StudySetDto in future
 
 export async function getContact(input: GetContactSchema): Promise<ContactDto> {
   const session = await dedupedAuth();
@@ -33,25 +35,25 @@ export async function getContact(input: GetContactSchema): Promise<ContactDto> {
 
   return cache(
     async () => {
-      const contact = await prisma.contact.findFirst({
+      const contact = await prisma.studySet.findFirst({
         where: {
-          organizationId: session.user.organizationId,
+          userId: session.user.id,
           id: parsedInput.id
         },
         select: {
           id: true,
-          record: true,
-          image: true,
-          name: true,
-          email: true,
-          address: true,
-          phone: true,
-          stage: true,
+          title: true,
+          filePath: true,
+          fileType: true,
+          fileSize: true,
+          content: true,
+          notes: true,
+          uploadDate: true,
           createdAt: true,
-          tags: {
+          topicTags: {
             select: {
               id: true,
-              text: true
+              name: true
             }
           }
         }
@@ -60,32 +62,40 @@ export async function getContact(input: GetContactSchema): Promise<ContactDto> {
         return notFound();
       }
 
+      // Map StudySet fields to legacy ContactDto fields
       const response: ContactDto = {
         id: contact.id,
-        record: contact.record,
-        image: contact.image ? contact.image : undefined,
-        name: contact.name,
-        email: contact.email ? contact.email : undefined,
-        address: contact.address ? contact.address : undefined,
-        phone: contact.phone ? contact.phone : undefined,
-        stage: contact.stage,
+        name: contact.title, // Use title as name
+        image: contact.filePath, // Use filePath as image
+        email: undefined, // These fields don't exist in StudySet
+        phone: undefined,
+        address: undefined,
+        stage: undefined,
         createdAt: contact.createdAt,
-        tags: contact.tags
+        tags: contact.topicTags.map(tag => ({
+          id: tag.id,
+          text: tag.name, // Map name to text for backward compatibility
+          name: tag.name, // Add required fields from ContactTag interface
+          color: null,
+          userId: session.user.id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }))
       };
 
       return response;
     },
-    Caching.createOrganizationKeyParts(
-      OrganizationCacheKey.Contact,
-      session.user.organizationId,
+    Caching.createStudyGroupKeyParts(
+      StudyGroupCacheKey.Contact,
+      session.user.studyGroupId || session.user.organizationId,
       parsedInput.id
     ),
     {
       revalidate: defaultRevalidateTimeInSeconds,
       tags: [
-        Caching.createOrganizationTag(
-          OrganizationCacheKey.Contact,
-          session.user.organizationId,
+        Caching.createStudyGroupTag(
+          StudyGroupCacheKey.Contact,
+          session.user.studyGroupId || session.user.organizationId,
           parsedInput.id
         )
       ]

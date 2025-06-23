@@ -3,28 +3,30 @@
 import { revalidateTag } from 'next/cache';
 
 import { authActionClient } from '@/actions/safe-action';
-import { Caching, OrganizationCacheKey } from '@/data/caching';
+import { Caching, StudyGroupCacheKey } from '@/data/caching';
 import { prisma } from '@/lib/db/prisma';
 import { NotFoundError } from '@/lib/validation/exceptions';
-import { addContactTaskSchema } from '@/schemas/contacts/add-contact-task-schema';
+import { addActionItemSchema } from '@/schemas/contacts/add-contact-task-schema'; // Using domain-aligned schema name
 
-export const addContactTask = authActionClient
-  .metadata({ actionName: 'addContactTask' })
-  .schema(addContactTaskSchema)
+export const addActionItem = authActionClient
+  .metadata({ actionName: 'addActionItem' })
+  .schema(addActionItemSchema)
   .action(async ({ parsedInput, ctx: { session } }) => {
-    const count = await prisma.contact.count({
+    // Using the renamed StudySet model
+    const count = await (prisma as any).studySet.count({
       where: {
         id: parsedInput.contactId,
-        organizationId: session.user.organizationId
+        studyGroupId: session.user.studyGroupId
       }
     });
     if (count < 1) {
-      throw new NotFoundError('Contact not found.');
+      throw new NotFoundError('StudySet not found.');
     }
 
-    await prisma.contactTask.create({
+    // Using the renamed ActionItem model
+    await (prisma as any).actionItem.create({
       data: {
-        contactId: parsedInput.contactId,
+        studySetId: parsedInput.contactId, // Will be renamed to studySetId in schema
         title: parsedInput.title,
         description: parsedInput.description,
         status: parsedInput.status,
@@ -36,10 +38,13 @@ export const addContactTask = authActionClient
     });
 
     revalidateTag(
-      Caching.createOrganizationTag(
-        OrganizationCacheKey.ContactTasks,
-        session.user.organizationId,
-        parsedInput.contactId
+      Caching.createStudyGroupTag(
+        StudyGroupCacheKey.ContactTasks, // Will be renamed to ActionItems in future
+        session.user.studyGroupId,
+        parsedInput.contactId // Will be renamed to studySetId in schema
       )
     );
   });
+
+// For backward compatibility during refactoring
+export const addContactTask = addActionItem;

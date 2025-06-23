@@ -11,25 +11,29 @@ import { session } from '@/lib/auth/session';
 
 declare module 'next-auth' {
   interface User {
-    organizationId: string | null;
+    // Include both for backward compatibility during domain-aligned refactoring
+    organizationId: string | undefined;
+    studyGroupId: string | undefined;
   }
 
   interface Session {
-    user: {
-      organizationId: string | null;
-    } & DefaultSession['user'];
+    user: DefaultSession['user'];
   }
 }
 
 declare module '@auth/core/adapters' {
   interface AdapterUser {
-    organizationId: string | null;
+    // Include both for backward compatibility during domain-aligned refactoring
+    organizationId: string | undefined;
+    studyGroupId: string | undefined;
   }
 }
 
 declare module '@auth/core/types' {
   interface User {
-    organizationId: string | null;
+    // Include both for backward compatibility during domain-aligned refactoring
+    organizationId: string | undefined;
+    studyGroupId: string | undefined;
   }
 }
 

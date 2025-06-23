@@ -7,11 +7,11 @@ import { AppSidebar } from '@/components/dashboard/app-sidebar';
 import { SettingsSidebar } from '@/components/dashboard/settings/settings-sidebar';
 import { useSidebar } from '@/components/ui/sidebar';
 import { Routes } from '@/constants/routes';
-import { FavoriteDto } from '@/types/dtos/favorite-dto';
+// Favorites functionality removed as part of pivot to document-centric model
 import { ProfileDto } from '@/types/dtos/profile-dto';
 
 export type SidebarRendererProps = {
-  favorites: FavoriteDto[];
+  // Favorites functionality removed as part of pivot to document-centric model
   profile: ProfileDto;
 };
 

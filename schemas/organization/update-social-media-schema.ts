@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// Helper function for creating social media field validators
 const createSocialMediaField = (name: string) => {
   return z
     .string({
@@ -13,7 +14,8 @@ const createSocialMediaField = (name: string) => {
     .or(z.literal(''));
 };
 
-export const updateSocialMediaSchema = z.object({
+// Schema for updating study group social media profiles (formerly organization social media)
+export const updateStudyGroupSocialMediaSchema = z.object({
   linkedInProfile: createSocialMediaField('LinkedIn'),
   instagramProfile: createSocialMediaField('Instagram'),
   youTubeChannel: createSocialMediaField('YouTube'),
@@ -22,4 +24,8 @@ export const updateSocialMediaSchema = z.object({
   facebookPage: createSocialMediaField('Facebook')
 });
 
-export type UpdateSocialMediaSchema = z.infer<typeof updateSocialMediaSchema>;
+export type UpdateStudyGroupSocialMediaSchema = z.infer<typeof updateStudyGroupSocialMediaSchema>;
+
+// For backward compatibility during refactoring
+export const updateSocialMediaSchema = updateStudyGroupSocialMediaSchema;
+export type UpdateSocialMediaSchema = UpdateStudyGroupSocialMediaSchema;

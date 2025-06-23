@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// Schema for updating notes on study sets (formerly contacts)
 export const updateContactNoteSchema = z.object({
   id: z
     .string({
@@ -21,3 +22,7 @@ export const updateContactNoteSchema = z.object({
 });
 
 export type UpdateContactNoteSchema = z.infer<typeof updateContactNoteSchema>;
+
+// For backward compatibility during refactoring
+export const updateStudySetNoteSchema = updateContactNoteSchema;
+export type UpdateStudySetNoteSchema = UpdateContactNoteSchema;

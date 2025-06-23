@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import type { Account, NextAuthConfig, Profile, User } from 'next-auth';
 
-import { createOrganizationAndConnectUser } from '@/lib/auth/organization';
+// No longer using organization-related imports
 import { cleanupVerificationRecords } from '@/lib/auth/verification';
 import { prisma } from '@/lib/db/prisma';
 import { fetchAndResizeRemoteImage } from '@/lib/imaging/fetch-and-resize-remote-image';
@@ -20,12 +20,6 @@ export const events = {
       });
 
       if (isNewUser && user.email) {
-        if (!user.organizationId) {
-          await createOrganizationAndConnectUser({
-            userId: user.id,
-            normalizedEmail: user.email.toLowerCase()
-          });
-        }
         if (account?.provider === OAuthIdentityProvider.Google) {
           // Mark the email as verified and clean up verification records
           await prisma.user.update({

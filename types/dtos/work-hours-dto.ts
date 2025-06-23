@@ -1,8 +1,12 @@
-import { type DayOfWeek } from '@prisma/client';
+import { type DayOfWeek } from '../prisma-mappings';
 
-import type { WorkTimeSlotDto } from '@/types/dtos/work-time-slot-dto';
+import type { StudyTimeSlotDto } from '@/types/dtos/work-time-slot-dto';
 
-export type WorkHoursDto = {
+// Domain-aligned DTO for study schedule
+export type StudyScheduleDto = {
   dayOfWeek: DayOfWeek;
-  timeSlots?: WorkTimeSlotDto[];
+  timeSlots?: StudyTimeSlotDto[];
 };
+
+// For backward compatibility during refactoring
+export type WorkHoursDto = StudyScheduleDto;

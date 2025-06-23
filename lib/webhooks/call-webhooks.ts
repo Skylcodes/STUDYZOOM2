@@ -1,4 +1,4 @@
-import { WebhookTrigger } from '@prisma/client';
+import { WebhookTrigger } from '@/types/prisma-mappings';
 
 import { prisma } from '@/lib/db/prisma';
 import { sendPayload } from '@/lib/webhooks/send-payload';
@@ -12,13 +12,13 @@ import { SortDirection } from '@/types/sort-direction';
 // - All webhook call attempts failed -> Put message in dead-letter queue
 
 export async function callWebhooks<T>(
-  organizationId: string,
+  studyGroupId: string, // Renamed from organizationId for domain alignment
   trigger: WebhookTrigger,
   payload: T
 ) {
-  const webhooks = await prisma.webhook.findMany({
+  const webhooks = await (prisma as any).webhook.findMany({
     where: {
-      organizationId,
+      studyGroupId, // Using studyGroupId parameter
       triggers: {
         has: trigger
       }

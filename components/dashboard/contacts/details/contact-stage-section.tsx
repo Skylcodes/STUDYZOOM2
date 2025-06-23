@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { ContactStage } from '@prisma/client';
+// Using StudySetStage instead of ContactStage for domain alignment
+import { StudySetStage } from '@/types/prisma-mappings';
 import { type SubmitHandler } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -27,6 +28,7 @@ import {
   updateContactStageSchema,
   type UpdateContactStageSchema
 } from '@/schemas/contacts/update-contact-stage-schema';
+// ContactDto is still used for backward compatibility
 import type { ContactDto } from '@/types/dtos/contact-dto';
 
 export type ContactStageSectionProps =
@@ -43,7 +45,7 @@ export function ContactStageSection({
     mode: 'all',
     defaultValues: {
       id: contact.id,
-      stage: contact.stage
+      stage: contact.stage as unknown as StudySetStage // Type assertion for backward compatibility during transition
     }
   });
   const onSubmit: SubmitHandler<UpdateContactStageSchema> = async (values) => {
@@ -82,8 +84,8 @@ export function ContactStageSection({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.values(ContactStage).map(
-                          (value: ContactStage) => (
+                        {Object.values(StudySetStage).map(
+                          (value: StudySetStage) => (
                             <SelectItem
                               key={value}
                               value={value}

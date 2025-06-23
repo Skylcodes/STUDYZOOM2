@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// Schema for deleting comments on study sets (formerly contacts)
 export const deleteContactCommentSchema = z.object({
   id: z
     .string({
@@ -15,3 +16,7 @@ export const deleteContactCommentSchema = z.object({
 export type DeleteContactCommentSchema = z.infer<
   typeof deleteContactCommentSchema
 >;
+
+// For backward compatibility during refactoring
+export const deleteStudySetCommentSchema = deleteContactCommentSchema;
+export type DeleteStudySetCommentSchema = DeleteContactCommentSchema;

@@ -1,4 +1,4 @@
-import { FeedbackCategory } from '@prisma/client';
+import { FeedbackCategory } from '../../types/prisma-mappings';
 import { z } from 'zod';
 
 export const sendFeedbackSchema = z.object({
